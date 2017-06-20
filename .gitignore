@@ -30,3 +30,10 @@
 *.exe
 *.out
 *.app
+
+/src/.vs/
+/src/x64
+/src/Clique.vcxproj.user
+/src/Clique.vcxproj.filters
+/src/Clique.VC.VC.opendb
+/src/Clique.VC.db
