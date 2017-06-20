@@ -1400,9 +1400,9 @@
 		\item Only graphs (non multipartite graph) that can resist partition extraction and satisfies $N < 2k$ would be here.
 		\item Removing a vertex that does not have $k$ edges is of $O(n)$. So removing set of vertices that does not have $k$ edges is $O(n\textsuperscript{2})$
 		\item Any graph that does not meet edge count criteria will not have clique of size $k$ and the processing stops here. Time complexity is $O(n)$.
-		\item Clique sets which resist partition extraction could also satisfy edge criteria count; but they collapse at neighborhood graph processing and after few vertices are processed. Time complexity is polynomial.
+		\item Clique sets which resist partition extraction could also satisfy edge count criteria; but they collapse at neighborhood graph processing and after few vertices are processed. Time complexity is polynomial.
 		\item If the graph is neither multipartite (friendly to partition extraction) nor clique sets and then they barely meets edge criteria. These graphs mostly have the shape of fence. These graphs collapse at neighborhood graph processing and after few vertices are processed. Time complexity is polynomial.
-		\item If the graph is none of the above, then vertex with least degree does not yield a neighborhood graph that could have a clique if $k - 1$. Time complexity is $O(n\textsuperscript{3})$
+		\item If the graph is none of the above, then vertex with least degree does not yield a neighborhood graph that could have a clique of $k - 1$. Time complexity is $O(n\textsuperscript{3})$
 		\item So, the time complexity for finding clique of $k$ where $N < 2K$ and partitions can not be extracted is polynomial.
 	\end{itemize}
 \end{slide}
@@ -1421,18 +1421,16 @@
 			\setlength{\itemsep}{0pt}
 			\setlength{\parskip}{5pt}
 			\setlength{\parsep}{0pt}
-			\item Partition extraction
 			\item Extracts complete partition
-			\item At least one vertex in the partition is connected to all vertices in the rest of partitions.
+			\item At least one vertex in the partition is connected to all vertices in all other partitions.
 			\item Partition may contain one or more vertex that is not connected to all other vertices in other partitions.
 		\end{itemize}
 		\item When a active vertex's neighborhood graph is explored, a partition is created with the current active vertex. This partition should also contain vertices that have same neighborhood but not connected to active vertex that is being explored.
-		\item When a multipartite graph with largest partitions is found and there is no more vertex to be explored:
+		\item When a multipartite graph with largest partition is found and there is no more vertex to be explored:
 		\begin{itemize}
 			\setlength{\itemsep}{0pt}
 			\setlength{\parskip}{5pt}
 			\setlength{\parsep}{0pt}
-			\item Partition extraction
 			\item Extract proper complete partition. if the vertex that is connected to some of the vertices is not part of the clique then exclude it; otherwise extract a limited complete multipartite graph containing it.
 			\item There may be more than one complete multipartite graph.
 			\item Number of partitions is nothing but the clique size
@@ -1444,7 +1442,6 @@
 				\setlength{\itemsep}{0pt}
 				\setlength{\parskip}{5pt}
 				\setlength{\parsep}{0pt}
-				\item Partition extraction
 				\item Total count of maximum cliques.
 				\item All maximum cliques (in compressed format : in the form of multipartite graph).
 			\end{itemize}
@@ -1577,7 +1574,7 @@
 		\setlength{\parsep}{0pt}
 		\item Though the space complexity is lower than $O(n^3)$, it is still larger than a computer system can provide for when $N$ is in 1000's.
 		\item When algorithm runs out of space (RAM), it could free-up top level intermediate graph(s) on need basis. When inner level returns, the freed up graph can be reconstructed from top most level's input graph.
-		\item This would avoid flusing RAM contents in to disk storage which is costly in many order of magnitude.
+		\item This would avoid flushing RAM contents in to disk storage which is costly in many order of magnitude.
 	\end{itemize}
 \end{slide}
 
@@ -1590,9 +1587,9 @@
 		\setlength{\itemsep}{0pt}
 		\setlength{\parskip}{20pt}
 		\setlength{\parsep}{0pt}
-		\item Access speed of CPU data cache is many order of magnitude faster than accessing system RAM.
-		\item Modern computer(s) have large enough CPU data cache to handle graph(s) with 100's of vertices without frequently swapping between CPU data cache and system RAM.
-		\item As the $|G|$ size increases, CPU data cache size is not sufficient enough to hold the entire graph for few levels. At this instance, algorithm speed is entirely depends on the speed of accessing system RAM.
+		\item Access speed of CPU data-cache is many order of magnitude faster than accessing system RAM.
+		\item Modern computer(s) have large enough CPU data-cache to handle graph(s) with 100's of vertices without frequently swapping between CPU data-cache and system RAM.
+		\item As the $|G|$ size increases, CPU data-cache size is not sufficient enough to hold the entire graph for few levels. At this instance, algorithm speed is entirely depends on the speed of accessing system RAM.
 		\item Therefore, the wall clock time to process graphs with 1000's of vertices is many order slower even though the time complexity is same.
 	\end{itemize}
 \end{slide}
@@ -1778,9 +1775,13 @@
 
 \begin{slide}
 	\begin{center}
-		Execution statistics for keller5.clq
+		Execution statistics for keller5.clq \\
+		http://mat.gsia.cmu.edu/COLOR02/INSTANCES/keller5.clq \\
 	\end{center}
 	\begin{tabular}{ l r }
+		Vertices & 776 \\
+		Edges & 225990 \\
+		Clique & 27 \\
 		Ticks(ms) & 2542521999 \\
 		Calls & 703285173499 \\
 		TwoNHits & 633190806735 \\
