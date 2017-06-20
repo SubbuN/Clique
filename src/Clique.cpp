@@ -236,7 +236,7 @@ namespace Graph
 			decltype(Vertex::Id) CliqueSize;
 			decltype(Vertex::Id)	*CliqueMembers;
 
-			UInt64	Calls, TwoNHits, SubgraphHits, BtmUpHits, BtmUpHits2, Count8, BtmUpCheck, BtmUpCheck2, Count9, Count10, Count11, Count12, Count13, Count14;
+			UInt64	Calls, TwoNHits, SubgraphHits, BtmUpHits, BtmUpHits2, PartitionExtr, BtmUpCheck, BtmUpCheck2, Count9, Count10, Count11, Count12, Count13, Count14;
 
 		public:
 			ResourceManager(decltype(Vertex::Id) _graphDegree, bool _verbose, UInt32 _blockSize)
@@ -275,7 +275,7 @@ namespace Graph
 
 			void ClearCounters()
 			{
-				Calls = TwoNHits = SubgraphHits = BtmUpHits = BtmUpHits2 = Count8 = BtmUpCheck = BtmUpCheck2 = Count9 = Count10 = Count11 = Count12 = Count13 = Count14 = 0;
+				Calls = TwoNHits = SubgraphHits = BtmUpHits = BtmUpHits2 = PartitionExtr = BtmUpCheck = BtmUpCheck2 = Count9 = Count10 = Count11 = Count12 = Count13 = Count14 = 0;
 			}
 		};
 
@@ -307,7 +307,7 @@ namespace Graph
 
 		char sz[512];
 
-		sprintf_s(sz, sizeof(sz), "%15I64d %15I64d %15I64d %15I64d %15I64d %15I64d %15I64d %15I64d %15I64d %15I64d %15I64d %15I64d %15I64d %15I64d\n", _resourceManager.Calls, _resourceManager.TwoNHits, _resourceManager.SubgraphHits, _resourceManager.BtmUpHits, _resourceManager.BtmUpHits2, _resourceManager.Count8, _resourceManager.BtmUpCheck, _resourceManager.BtmUpCheck2, _resourceManager.Count9, _resourceManager.Count10, _resourceManager.Count11, _resourceManager.Count12, _resourceManager.Count13, _resourceManager.Count14);
+		sprintf_s(sz, sizeof(sz), "%15I64d %15I64d %15I64d %15I64d %15I64d %15I64d %15I64d %15I64d %15I64d %15I64d %15I64d %15I64d %15I64d %15I64d\n", _resourceManager.Calls, _resourceManager.TwoNHits, _resourceManager.SubgraphHits, _resourceManager.BtmUpHits, _resourceManager.BtmUpHits2, _resourceManager.PartitionExtr, _resourceManager.BtmUpCheck, _resourceManager.BtmUpCheck2, _resourceManager.Count9, _resourceManager.Count10, _resourceManager.Count11, _resourceManager.Count12, _resourceManager.Count13, _resourceManager.Count14);
 		textStream(sz);
 
 		decltype(Vertex::Id) subGraphSize = 0;
@@ -368,7 +368,7 @@ namespace Graph
 		decltype(Vertex::Id) i;
 
 		char sz[512];
-		sprintf_s(sz, sizeof(sz), "%15s %15s %15s %15s %15s %15s %15s %15s %15s %15s %15s %15s %15s %15s %15s %15s %15s %15s\n", "Vertices", "Clique", "Clique-R", "Ticks", "Calls", "TwoNHits", "SubgraphHits", "BtmUpHits", "BtmUpHits2", "Count8", "BtmUpCheck", "BtmUpCheck2", "Count9", "Count10", "Count11", "Count12", "Count13", "Count14");
+		sprintf_s(sz, sizeof(sz), "%15s %15s %15s %15s %15s %15s %15s %15s %15s %15s %15s %15s %15s %15s %15s %15s %15s %15s\n", "Vertices", "Clique", "Clique-R", "Ticks", "Calls", "TwoNHits", "SubgraphHits", "BtmUpHits", "BtmUpHits2", "PartitionExtr", "BtmUpCheck", "BtmUpCheck2", "Count9", "Count10", "Count11", "Count12", "Count13", "Count14");
 		TraceMessage(sz);
 
 		for (i = 0; i < _graph.size(); i++)
@@ -413,7 +413,7 @@ namespace Graph
 			assert(IsClique(_graph, resourceManager.CliqueMembers, cliqueSize, resourceManager.BitSet));
 		}
 
-		sprintf_s(sz, sizeof(sz), "%15d %15d %15d %15I64d %15I64d %15I64d %15I64d %15I64d %15I64d %15I64d %15I64d %15I64d %15I64d %15I64d %15I64d %15I64d %15I64d %15I64d\n", (int)graph.size(), cliqueSize, _cliqueSize, GetCurrentTick() - ticks, resourceManager.Calls, resourceManager.TwoNHits, resourceManager.SubgraphHits, resourceManager.BtmUpHits, resourceManager.BtmUpHits2, resourceManager.Count8, resourceManager.BtmUpCheck, resourceManager.BtmUpCheck2, resourceManager.Count9, resourceManager.Count10, resourceManager.Count11, resourceManager.Count12, resourceManager.Count13, resourceManager.Count14);
+		sprintf_s(sz, sizeof(sz), "%15d %15d %15d %15I64d %15I64d %15I64d %15I64d %15I64d %15I64d %15I64d %15I64d %15I64d %15I64d %15I64d %15I64d %15I64d %15I64d %15I64d\n", (int)graph.size(), cliqueSize, _cliqueSize, GetCurrentTick() - ticks, resourceManager.Calls, resourceManager.TwoNHits, resourceManager.SubgraphHits, resourceManager.BtmUpHits, resourceManager.BtmUpHits2, resourceManager.PartitionExtr, resourceManager.BtmUpCheck, resourceManager.BtmUpCheck2, resourceManager.Count9, resourceManager.Count10, resourceManager.Count11, resourceManager.Count12, resourceManager.Count13, resourceManager.Count14);
 		TraceMessage(sz);
 
 		for (i = 0; (resourceManager.CallFrame[i].callCount > 0); i++)
@@ -471,7 +471,7 @@ namespace Graph
 		}
 
 		char sz[512];
-		sprintf_s(sz, sizeof(sz), "%15s %15s %15s %15s %15s %15s %15s %15s %15s %15s %15s %15s %15s %15s %15s %15s %15s\n", "Vertices", "Clique", "Ticks", "Calls", "TwoNHits", "SubgraphHits", "BtmUpHits", "BtmUpHits2", "Count8", "BtmUpCheck", "BtmUpCheck2", "Count9", "Count10", "Count11", "Count12", "Count13", "Count14");
+		sprintf_s(sz, sizeof(sz), "%15s %15s %15s %15s %15s %15s %15s %15s %15s %15s %15s %15s %15s %15s %15s %15s %15s\n", "Vertices", "Clique", "Ticks", "Calls", "TwoNHits", "SubgraphHits", "BtmUpHits", "BtmUpHits2", "PartitionExtr", "BtmUpCheck", "BtmUpCheck2", "Count9", "Count10", "Count11", "Count12", "Count13", "Count14");
 		TraceMessage(sz);
 
 		SetNBits((UInt64*)activeNeighbours, _graph.size());
@@ -644,6 +644,8 @@ namespace Graph
 					if (j < i)
 						goto LoopExit;
 				}
+
+				_resourceManager.PartitionExtr++;
 
 				for (i = 0, j = 0, l = 0; j < activeVertexCount; j++)
 				{
@@ -1170,7 +1172,7 @@ namespace Graph
 			if (_depth == 0)
 			{
 				char sz[512];
-				sprintf_s(sz, sizeof(sz), "%15d %15d %15d %15I64d %15I64d %15I64d %15I64d %15I64d %15I64d %15I64d %15I64d %15I64d %15I64d %15I64d %15I64d %15I64d %15I64d %15I64d\n", (int)graph.size(), cliqueSize, _cliqueSize, GetCurrentTick() - ticks, _resourceManager.Calls, _resourceManager.TwoNHits, _resourceManager.SubgraphHits, _resourceManager.BtmUpHits, _resourceManager.BtmUpHits2, _resourceManager.Count8, _resourceManager.BtmUpCheck, _resourceManager.BtmUpCheck2, _resourceManager.Count9, _resourceManager.Count10, _resourceManager.Count11, _resourceManager.Count12, _resourceManager.Count13, _resourceManager.Count14);
+				sprintf_s(sz, sizeof(sz), "%15d %15d %15d %15I64d %15I64d %15I64d %15I64d %15I64d %15I64d %15I64d %15I64d %15I64d %15I64d %15I64d %15I64d %15I64d %15I64d %15I64d\n", (int)graph.size(), cliqueSize, _cliqueSize, GetCurrentTick() - ticks, _resourceManager.Calls, _resourceManager.TwoNHits, _resourceManager.SubgraphHits, _resourceManager.BtmUpHits, _resourceManager.BtmUpHits2, _resourceManager.PartitionExtr, _resourceManager.BtmUpCheck, _resourceManager.BtmUpCheck2, _resourceManager.Count9, _resourceManager.Count10, _resourceManager.Count11, _resourceManager.Count12, _resourceManager.Count13, _resourceManager.Count14);
 				TraceMessage(sz);
 
 				for (i = 0; (_resourceManager.CallFrame[i].callCount > 0); i++)
