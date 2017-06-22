@@ -374,6 +374,19 @@ namespace Graph
 
 	bool GetQualifiedEdges(Ext::Array<Vertex2> _graph, decltype(Vertex2::Id) _minimumNeighbours);
 
+	struct Partition
+	{
+	public:
+		Partition()
+			: Size(0), List(nullptr)
+		{
+		}
+	public:
+		ID Id;
+		ID Size;
+		ID *List;
+	};
+
 	namespace Clique
 	{
 		enum struct FindOperation : byte
@@ -382,11 +395,36 @@ namespace Graph
 			MaximumClique = 2,
 			EnumerateCliques = 3,
 		};
+
+		struct CliqueHandler
+		{
+		public:
+			// Return true to continue; false to stop.
+			typedef bool(*OnProcessResult)(ID cliqueSize, Partition* partitions, void* context);
+
+			// Return true to continue; false to skip.
+			typedef bool(*OnPreCondition)(ID currentMaxCliqueSize, ID partitionSize, Partition* partitions, Ext::Array<Vertex> neighbourGraph, ID *originalVertexId, void* context);
+
+		public:
+			CliqueHandler(OnProcessResult processResult, void *processResultContext,
+				OnPreCondition preCondition, void *preConditionContext)
+				: ProcessResult(processResult), ProcessResultContext(processResultContext),
+				PreCondition(preCondition), PreConditionContext(preConditionContext)
+			{
+			}
+
+		public:
+			OnProcessResult ProcessResult;
+			OnPreCondition PreCondition;
+
+			void *ProcessResultContext;
+			void *PreConditionContext;
+		};
 	}
 
 	Ext::Array<Vertex> CreateHardPartitionClique(decltype(Vertex::Id) _graphSize, decltype(Vertex::Id) _cliqueSize);
 
-	decltype(Vertex::Id) FindClique(Ext::Array<Vertex> _graph, decltype(Vertex::Id) _cliqueSize = INVALID_ID, Clique::FindOperation _op = Clique::FindOperation::MaximumClique);
+	decltype(Vertex::Id) FindClique(Ext::Array<Vertex> _graph, decltype(Vertex::Id) _cliqueSize = INVALID_ID, Clique::FindOperation _op = Clique::FindOperation::MaximumClique, Clique::CliqueHandler *handler = nullptr);
 
 	decltype(Vertex::Id) FindVertextColor(Ext::Array<Vertex> _graph, decltype(Vertex::Id) _cliqueSize);
 }

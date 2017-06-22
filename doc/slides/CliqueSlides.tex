@@ -512,12 +512,14 @@
 		\State $H \gets G$
 		\ForAll{($v$ in $V$)}
 			\State $G' \gets neighborhood(H, v, {\color{red}kMax})$
-			{\color{red} \If{($|G'| >= kMax$)}
+			{\color{red}
+			\If{($|G'| >= kMax$)}
 				\State $(found_1, kMax_1) \gets FindMaximumCliqueSize(G', kMax)$
 				\If{($found_1$ and (($kMax_1 + 1) > kMax$))}
 					\State $kMax \gets kMax_1 + 1$
 				\EndIf
-			\EndIf }
+			\EndIf 
+			}
 			\State $H \gets \{H - v\}$
 		\EndFor
 		\State \textbf{return} {\color{red} $(kMax >= k, kMax)$ }
@@ -565,7 +567,7 @@
 	\setlength{\parsep}{0pt}
 	\item Time complexity : $f(x) = 2\textsuperscript{6} + 2\textsuperscript{5} + 2\textsuperscript{4} + $
 	\item Number of distinct cliques of size 6 is $2\textsuperscript{6}$
-	\item Space to store $2\textsuperscript{6}$ 6-cliques is $|V|$
+	\item Space to store $2\textsuperscript{6}$ 6-clique is $|V|$
 \end{itemize}
 \end{slide}
 
@@ -595,7 +597,7 @@
 	\setlength{\parsep}{0pt}
 	\item Time complexity : $f(x) = 3\textsuperscript{6} + 3\textsuperscript{5} + 3\textsuperscript{4} + 3\textsuperscript{3} + $
 	\item Number of distinct cliques of size 6 is $3\textsuperscript{6}$
-	\item Space to store $3\textsuperscript{6}$ 6-cliques is $|V|$
+	\item Space to store $3\textsuperscript{6}$ 6-clique is $|V|$
 \end{itemize}
 \end{slide}
 
@@ -1022,37 +1024,17 @@
 	\draw plot[domain=6:10] ({\sgn 1/20*(\x*\x)},\x);
 	\draw (-5,10) -- node[above] {$least |d|$} (5,10); 
 	\draw (0,0) -- node[right] {$k'$} (0,6);
-	\draw ({-(6*6)/20},6) -- ({(6*6)/20},6);
+	\draw ({-(6*6)/20},6) -- node[above] {$n' < 2k'$} ({(6*6)/20},6);
 	\end{tikzpicture}
 	\small{
 	\begin{itemize}
-	\setlength{\itemsep}{0pt}
-	\setlength{\parskip}{20pt}
-	\setlength{\parsep}{0pt}
-	\item $k$ is maximum clique size of graph $G$.
-	\item At depth ($k - k'$), both top-down and bottom-up gets triggered aggressively and reducing further levels.
+		\setlength{\itemsep}{0pt}
+		\setlength{\parskip}{20pt}
+		\setlength{\parsep}{0pt}
+		\item $k$ is maximum clique size of graph $G$.
+		\item Shape (horizontal) denotes neighborhood graph size at each recursion level.
 	\end{itemize}
 	}
-\end{slide}
-
-
-\begin{slide}
-	\begin{tikzpicture}
-	\draw (-1.5,0) parabola (-6,10);
-	\draw (1.5,0) parabola (6,10);
-	\draw (-1.5,0) -- (1.5,0); 
-	\draw (-6,10) -- node[above] {$largest |d|$} (6,10); 
-	\end{tikzpicture}
-	\begin{tikzpicture}
-	\draw (0,10) -- node[left] {$k$} (0,0); 
-	\end{tikzpicture}
-	\begin{tikzpicture}
-	\foreach \sgn in {-,+}
-	\draw plot[domain=6:10] ({\sgn 1/20*(\x*\x)},\x);
-	\draw (-5,10) -- node[above] {$least |d|$} (5,10); 
-	\draw (0,0) -- node[right] {$k'$} (0,6);
-	\draw ({-(6*6)/20},6) -- node[above] {$n' < 2k'$} ({(6*6)/20},6);
-	\end{tikzpicture}
 \end{slide}
 
 
@@ -1066,6 +1048,7 @@
 		\item Neighborhood graph generation
 		\item Working set involved in bottom-up (collapsing identical processed neighborhood graph) processing.
 		\item Recursion depth
+		\item Graph size at each recursion level.
 	\end{itemize}
 \end{slide}
 

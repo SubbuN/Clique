@@ -325,13 +325,31 @@ namespace Graph
 		}
 	}
 
+	//
+	//	Notes:
+	//		For performance and simplicity, a self loop edge is created for each vertex in the graph
+	//		A look-up is maintained to answer the vertex at given rank(sorted order) using vertexId.
+	//			But not vice-versa. Reverse look-up may be needed for further enhancements
+	//
+	//		A look-up is maintained to answer the original vertex id (in top most level graph) using
+	//		_originalVertexId at each level. The ordering is preserved at each level. So, to find a vertex
+	//		in a given level for the original vertex, scan the index of original vertex id at the given level.
+	//		Direct look-up may be needed for further enhancements. But this look-up needs two levels.
+	//			1. OriginalVertexId to vertexId at each level
+	//			2.	OriginalVertexId to deepest level where it is last appeared.
+	//
+	//		Callbacks and filters to avoid exploring certain path are not added in this implementation for simplicity.
+	//
+
+
 	bool TryFindClique(Ext::Array<Vertex> _graph, ID *_originalVertexId,
 				Clique::SetsOfSet& _cliqueMembers, decltype(Vertex::Id) _cliqueMembersCount,
 				decltype(Vertex::Id)& _cliqueSize, Clique::FindOperation _op,
 				byte* _targettedVertices, decltype(Vertex::Id) _targettedVerticesCount,
-				decltype(Vertex::Id) _depth, Clique::ResourceManager& _resourceManager);
+				decltype(Vertex::Id) _depth, Clique::CliqueHandler *_handler,
+				Clique::ResourceManager& _resourceManager);
 
-	decltype(Vertex::Id) FindClique(Ext::Array<Vertex> _graph, decltype(Vertex::Id) _cliqueSize, Clique::FindOperation _op)
+	decltype(Vertex::Id) FindClique(Ext::Array<Vertex> _graph, decltype(Vertex::Id) _cliqueSize, Clique::FindOperation _op, Clique::CliqueHandler *_handler)
 	{
 		if (IsCorrupt(_graph))
 			throw "invalid graph.";
@@ -401,7 +419,7 @@ namespace Graph
 		auto ticks = GetCurrentTick();
 		auto cliqueSize = (_cliqueSize == INVALID_ID) ? 3 : _cliqueSize;
 
-		if (!TryFindClique(graph, originalVertexId, cliqueMembers, 0, cliqueSize, _op, targettedVertices, 0, 0, resourceManager))
+		if (!TryFindClique(graph, originalVertexId, cliqueMembers, 0, cliqueSize, _op, targettedVertices, 0, 0, _handler, resourceManager))
 		{
 			cliqueSize = (cliqueSize > ((_cliqueSize == INVALID_ID) ? 3 : _cliqueSize)) ? (cliqueSize - 1) : 0;
 			Sort<decltype(Vertex::Id), decltype(Vertex::Id), Int32>(resourceManager.CliqueMembers, nullptr, 0, cliqueSize, true, resourceManager.Stack);
@@ -511,7 +529,7 @@ namespace Graph
 			resourceManager.ClearCounters();
 			resourceManager.TopGraphForMemoryReclaim = 1;
 
-			if (TryFindClique(graph, originalVertexId, cliqueMembers, 0, cliqueSize, Clique::FindOperation::ExactSearch, targettedVertices, 0, 0, resourceManager))
+			if (TryFindClique(graph, originalVertexId, cliqueMembers, 0, cliqueSize, Clique::FindOperation::ExactSearch, targettedVertices, 0, 0, nullptr, resourceManager))
 			{
 				color++;
 
@@ -544,7 +562,8 @@ namespace Graph
 				Clique::SetsOfSet& _cliqueMembers, decltype(Vertex::Id) _cliqueMembersCount,
 				decltype(Vertex::Id)& _cliqueSize, Clique::FindOperation _op,
 				byte* _targettedVertices, decltype(Vertex::Id) _targettedVerticesCount,
-				decltype(Vertex::Id) _depth, Clique::ResourceManager& _resourceManager)
+				decltype(Vertex::Id) _depth, Clique::CliqueHandler *_handler,
+				Clique::ResourceManager& _resourceManager)
 	{
 		byte *activeVertexList, *activeNeighbours, *pActiveNeighbours;
 		decltype(Vertex::Id)	*vertexId, *vertexEdgeCount, *ids;
@@ -969,7 +988,7 @@ namespace Graph
 					//frame->_graph = _graph;
 
 #if (defined(TryFindClique_Recursion))
-					isExist = TryFindClique(graph, originalVertexId, _cliqueMembers, _cliqueMembersCount + cliqueVertexCount2, subCliqueSize, _op, targettedVertices, targettedVerticesCount, _depth + 1, _resourceManager);
+					isExist = TryFindClique(graph, originalVertexId, _cliqueMembers, _cliqueMembersCount + cliqueVertexCount2, subCliqueSize, _op, targettedVertices, targettedVerticesCount, _depth + 1, _handler, _resourceManager);
 
 					// Possible memory reuse for graph allocation.
 					graph = _resourceManager.CallFrame[_depth + 1]._graph;
