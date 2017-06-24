@@ -9,9 +9,9 @@ Output : Maximum clique size plus an instance of maximum clique
 
 ## Explanation of the algorithm
 
-[Slides(pdf)](https://github.com/SubbuN/Clique/doc/slides/CliqueSlides.pdf)
+[Slides(pdf)](https://github.com/SubbuN/Clique/tree/master/doc/slides/CliqueSlides.pdf)
 
-[Slides(tex)](https://github.com/SubbuN/Clique/doc/slides/CliqueSlides.tex)
+[Slides(tex)](https://github.com/SubbuN/Clique/tree/master/doc/slides/CliqueSlides.tex)
 
 
 ## Algorithm
