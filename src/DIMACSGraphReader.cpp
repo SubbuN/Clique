@@ -71,7 +71,7 @@ namespace Graph
 					// skip white characters
 					for (; (i < preambleSize) && ((buffer[i] == ' ') || (buffer[i] == '\t')); i++);
 
-					//	Read vertexCount
+					//	Read edgeCount
 					for (; (i < preambleSize) && ('0' <= buffer[i]) && (buffer[i] <= '9'); i++)
 						edgeCount = edgeCount * 10 + buffer[i] - '0';
 				}
@@ -141,9 +141,76 @@ namespace Graph
 		return graph;
 	}
 
-	SATFormula	ReadDIMACSSATFormula(const char * _satFormula)
+	void SaveDIMACSGraph(const char * _binGraphFile, Ext::Array<Vertex> _graph, const char* _name, byte *_buffer)
 	{
-		SATFormula formula;
+		if ((_binGraphFile == nullptr) || (*_binGraphFile == 0))
+			return;
+
+		if (_name == nullptr)
+		{
+			// Extract file name
+			const char *name = _binGraphFile;
+			for (_name = name = _binGraphFile; *name; name++)
+			{
+				if ((*name == '/') || (*name == '\\'))
+					_name = name + 1;
+			}
+		}
+
+		FILE	*fsOut = nullptr;
+		byte	*buffer = nullptr;
+
+		try
+		{
+			if (fopen_s(&fsOut, _binGraphFile, "wb") != 0)
+				return ;
+
+			char line[512], szCount[16];
+			size_t edgeCount = 0;
+			for (size_t i = 0; i < _graph.size(); i++)
+			{
+				edgeCount += _graph[i].Count;
+				if (BitTest(_graph[i].Neighbours, i))
+					edgeCount--;
+			}
+
+			int size = sprintf_s(line, sizeof(line), "c FILE: %s\nc%-64s\nc Graph Size:%I64d\nc\np edge %I64d %I64d\n", _name, "", _graph.size(), _graph.size(), edgeCount / 2);
+			int size2 = sprintf_s(szCount, sizeof(szCount), "%d\n", size);
+
+			fwrite(szCount, 1, size2, fsOut);
+			fwrite(line, 1, size, fsOut);
+
+			size_t bufferSize = GetQWordAlignedSizeForBits(_graph.size());
+			buffer = (_buffer != nullptr) ? _buffer : new byte[bufferSize];
+			for (size_t i = 0; i < _graph.size(); i++)
+			{
+				bufferSize = (i + 8) / 8;
+				memset(buffer, 0, bufferSize);
+
+				for (size_t j = 0; j < i; j++)
+				{
+					if (BitTest(_graph[i].Neighbours, j))
+						buffer[j >> 3] |= DIMACSBitMask[j & 0x07];
+				}
+
+				fwrite(buffer, 1, bufferSize, fsOut);
+			}
+
+			fclose(fsOut);
+		}
+		catch (...)
+		{
+			if ((_buffer == nullptr) && (buffer != nullptr))
+				delete[]buffer;
+
+			if (fsOut != nullptr)
+				fclose(fsOut);
+		}
+	}
+
+	SAT::Formula ReadDIMACSSATFormula(const char * _satFormula)
+	{
+		SAT::Formula formula;
 
 		try
 		{
@@ -200,21 +267,12 @@ namespace Graph
 
 			offset.push_back((int)literals.size());
 
-			int *pData = new int[offset.size() + literals.size()];
-
-			for (int i = 0; i < clauses; i++)
-				pData[i] = offset[i];
-
-			pData[clauses] = offset[clauses];
-
-			for (int i = 0, j = clauses + 1; i < literals.size(); i++, j++)
-				pData[j] = literals[i];
-
-
 			formula.Variables = varialbes;
-			formula.Clauses = clauses;
-			formula.Nodes = (int)literals.size();
-			formula.pData = pData;
+			formula.Clauses.ctor(new byte[Ext::ArrayOfArray<int, ID>::GetAllocationSize((ID)clauses, (ID)literals.size())], (ID)clauses, (ID)literals.size());
+
+			memcpy(formula.Clauses.ptrList(), literals._Myfirst(), sizeof(int) * literals.size());
+			for (int i = 0; i < clauses; i++)
+				formula.Clauses.InitSet(i, ID(offset[i + 1] - offset[i]));
 
 			return formula;
 		}
@@ -223,6 +281,142 @@ namespace Graph
 		}
 
 		return formula;
+	}
+
+	void PrintSATClause(int* _ptrClause, ID _size, TextStream _textStream, char* _buffer, size_t _bufferSize)
+	{
+		if (_textStream == nullptr)
+			return;
+
+		if (_buffer == nullptr)
+			throw std::invalid_argument(__FUNCDNAME__);
+
+		size_t size = 0;
+		for (size_t i = 0; i < _size; i++)
+		{
+			size += sprintf_s(_buffer + size, _bufferSize - size, "%d ", _ptrClause[i]);
+
+			if ((_bufferSize - size) < 10)
+			{
+				_textStream(_buffer);
+				size = 0;
+			}
+		}
+
+		size += sprintf_s(_buffer + size, _bufferSize - size, "0\n");
+		_textStream(_buffer);
+	}
+
+
+	void SaveDIMACSSATFormula(const char * _binGraphFile, SAT::Formula _formula, const char* _name)
+	{
+		if ((_binGraphFile == nullptr) || (*_binGraphFile == 0))
+			return;
+
+		if (_name == nullptr)
+		{
+			// Extract file name
+			const char *name = _binGraphFile;
+			for (_name = name = _binGraphFile; *name; name++)
+			{
+				if ((*name == '/') || (*name == '\\'))
+					_name = name + 1;
+			}
+		}
+
+		FILE	*fsOut = nullptr;
+
+		try
+		{
+			if (fopen_s(&fsOut, _binGraphFile, "wb") != 0)
+				return;
+
+			Ext::ArrayOfArray<int, ID>& clauses = _formula.Clauses;
+			int *list = clauses.ptrList();
+			char line[512];
+			int size = sprintf_s(line, sizeof(line), "c FILE: %s\nc%-64s\np cnf %d %d\n", _name, "", _formula.Variables, clauses.setCount());
+
+			fwrite(line, 1, size, fsOut);
+
+			for (ID i = 0; i < clauses.setCount(); i++)
+			{
+				auto clauseSize = clauses.GetSetSize(i);
+				auto start = clauses.GetSetStartIndex(i);
+
+				size = 0;
+				for (auto end = start + clauseSize; start < end; start++)
+				{
+					size += sprintf_s(line + size, sizeof(line) - size, "%d ", list[start]);
+
+					if ((sizeof(line) - size) < 10)
+					{
+						fwrite(line, 1, size, fsOut);
+						size = 0;
+					}
+				}
+
+				size += sprintf_s(line + size, sizeof(line) - size, "0\n");
+				fwrite(line, 1, size, fsOut);
+			}
+
+			fclose(fsOut);
+		}
+		catch (...)
+		{
+			if (fsOut != nullptr)
+				fclose(fsOut);
+		}
+	}
+
+
+	void SaveDIMACSSATClauses(const char* _binGraphFile, SAT::Formula _formula, ID _clauseSize)
+	{
+		if ((_binGraphFile == nullptr) || (*_binGraphFile == 0))
+			return;
+
+		FILE	*fsOut = nullptr;
+
+		try
+		{
+			if (fopen_s(&fsOut, _binGraphFile, "wb") != 0)
+				return;
+
+			Ext::ArrayOfArray<int, ID>& clauses = _formula.Clauses;
+			int *list = clauses.ptrList();
+			char line[512];
+			int size = 0;
+
+			for (ID i = 0; i < clauses.setCount(); i++)
+			{
+				auto clauseSize = clauses.GetSetSize(i);
+				auto start = clauses.GetSetStartIndex(i);
+
+				if (clauseSize != _clauseSize)
+					continue;
+
+				size = 0;
+				for (auto end = start + clauseSize; start < end; start++)
+				{
+					size += sprintf_s(line + size, sizeof(line) - size, "%d ", list[start]);
+
+					if ((sizeof(line) - size) < 10)
+					{
+						fwrite(line, 1, size, fsOut);
+						size = 0;
+					}
+				}
+
+				size += sprintf_s(line + size, sizeof(line) - size, "0\n");
+				fwrite(line, 1, size, fsOut);
+			}
+
+			fclose(fsOut);
+		}
+		catch (...)
+		{
+			if (fsOut != nullptr)
+				fclose(fsOut);
+		}
 	}
 }
 

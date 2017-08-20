@@ -84,7 +84,19 @@ namespace Graph
 
 	void SetTraceMessageHandler(TextStream textStream);
 
-	void PrintGraphMatrix(Ext::Array<Vertex> _graph, TextStream textStream);
+	void PrintGraph(Ext::Array<Vertex>& _graph, TextStream traceMessage);
+
+	void PrintArray(ID *list, size_t size, TextStream traceMessage, char *format = nullptr);
+
+	void PrintArrayIdexValue(ID *list, size_t size, TextStream traceMessage, char *format = nullptr);
+
+	void PrintKeyValueArray(ID *keys, ID *values, size_t size, TextStream traceMessage, char *format = nullptr);
+
+	void PrintSets(Ext::ArrayOfArray<ID, ID> _sets, TextStream traceMessage);
+
+	void PrintSets(Ext::ArrayOfArray<ID, ID> _sets, Ext::Array<SAT::FormulaNode> _nodes, TextStream traceMessage);
+
+	void PrintGraphMatrix(Ext::Array<Vertex>& _graph, TextStream textStream);
 
 #ifdef _WIN32
 	#pragma comment(lib, "Kernel32.lib")
@@ -118,18 +130,6 @@ namespace Graph
 
 	bool IsCorrupt(Ext::Array<Vertex> _graph, bool _createdThroughCreateGraph = false);
 
-
-	void forceinline ZeroMemoryPack8(void* _ptr, size_t count)
-	{
-		for (UInt64 *ptr = (UInt64 *)_ptr, *pEnd = ptr + (count >> 3); (ptr < pEnd); ptr++)
-			*ptr = 0;
-	};
-
-	void forceinline CopyMemoryPack8(void* _dest, void* _src, size_t count)
-	{
-		for (UInt64 *dest = (UInt64 *)_dest, *src = (UInt64 *)_src, *pEnd = dest + (count >> 3); (dest < pEnd); dest++, src++)
-			*dest = *src;
-	};
 
 	void forceinline SetNBits(byte* _ptr, size_t _n)
 	{
@@ -324,12 +324,24 @@ namespace Graph
 		return idx;
 	}
 
+	void PrintSATClause(int* _ptrClause, ID _size, TextStream _textStream, char* _buffer, size_t _bufferSize);
 
 	Ext::Array<Vertex> ReadDIMACSGraph(const char * _binGraphFile);
 
-	SATFormula	ReadDIMACSSATFormula(const char * _satFormula);
+	SAT::Formula	ReadDIMACSSATFormula(const char * _satFormula);
 
-	Ext::Array<Vertex> CreateGraph(SATFormula _formula);
+	void SaveDIMACSGraph(const char* _binGraphFile, Ext::Array<Vertex> _graph, const char* _name = nullptr, byte* _buffer = nullptr);
+
+	void SaveDIMACSSATFormula(const char* _binGraphFile, SAT::Formula _formula, const char* _name = nullptr);
+
+	void SaveDIMACSSATClauses(const char* _binGraphFile, SAT::Formula _formula, ID _clauseSize);
+
+	Ext::Array<Vertex> CreateGraph(SAT::Formula& _formula, Ext::Array<SAT::FormulaNode> _nodes, void* _ptr = nullptr);
+
+	Ext::Array<Vertex> CreateGraph(SAT::Formula& _formula, void* _ptr = nullptr);
+
+	// Returns empty graph if empty partition is found.
+	Ext::Array<Vertex> CreateGraph(SAT::Formula& _formula, int _literal, int _literal2, ID* _array, ID* _array2, void* _ptr = nullptr);
 
 
 	Ext::Array<Vertex> ResizeGraph(Ext::Array<Vertex> _graph, decltype(Vertex::Id) _newSize, void* _ptr = nullptr);
@@ -361,13 +373,15 @@ namespace Graph
 	size_t ExtractBitsFromComplement(byte* _complementFrom, byte* _to, byte* _mask, byte* _sizeOfBitset, size_t _size);
 
 
+	bool IsSame(Ext::Array<Vertex> _graph, Ext::Array<Vertex> _graph2);
+
 	bool IsSubgraph(Ext::Array<Vertex> _graph, Ext::Array<Vertex> _subGraph);
 
 	bool IsClique(Ext::Array<Vertex> _graph, decltype(Vertex::Id) *_cliqueMembers, decltype(Vertex::Id) _cliqueSize, byte* _bitset);
 
 	bool IsIndependantSet(Ext::Array<Vertex> _graph, decltype(Vertex::Id) *_vertices, decltype(Vertex::Id) _verticesSize, byte* _bitset);
 
-	bool IsProperColor(Ext::Array<Vertex> _graph, decltype(Vertex::Id) *_vertexColor);
+	bool IsValidColoring(Ext::Array<Vertex> _graph, decltype(Vertex::Id) *_vertexColor);
 
 
 	bool GetQualifiedEdges(Ext::Array<Vertex> _graph, decltype(Vertex::Id) _minimumNeighbours, byte *_bitset);
@@ -424,8 +438,14 @@ namespace Graph
 
 	Ext::Array<Vertex> CreateHardPartitionClique(decltype(Vertex::Id) _graphSize, decltype(Vertex::Id) _cliqueSize);
 
+	Ext::Array<Vertex> CreateFenceGraph(decltype(Vertex::Id) _n, decltype(Vertex::Id) _height);
+
 	decltype(Vertex::Id) FindClique(Ext::Array<Vertex> _graph, decltype(Vertex::Id) _cliqueSize = INVALID_ID, Clique::FindOperation _op = Clique::FindOperation::MaximumClique, Clique::CliqueHandler *handler = nullptr);
 
-	decltype(Vertex::Id) FindVertextColor(Ext::Array<Vertex> _graph, decltype(Vertex::Id) _cliqueSize);
+	decltype(Vertex::Id) GetIndependentSets(Ext::Array<Vertex> _graph, Ext::ArrayOfArray<Graph::ID, Graph::ID> *_pSets, Ext::Array<ID> _vertexColor, decltype(Vertex::Id) _cliqueSize = 0);
+
+	bool Solve(SAT::Formula _formula);
+
+	Ext::BooleanError PackVertices(Ext::Array<Vertex> _graph);
 }
 #endif

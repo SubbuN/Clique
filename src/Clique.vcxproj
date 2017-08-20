@@ -158,6 +158,7 @@
     <ClCompile Include="GraphUtility.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MemoryPool.cpp" />
+    <ClCompile Include="PrintHelper.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="LICENSE" />

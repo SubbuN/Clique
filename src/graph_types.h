@@ -52,32 +52,120 @@ typedef unsigned __int32 ID;
 		};
 	};
 
-	struct SATFormula
+	namespace SAT
 	{
-		ID	Variables;
-		ID	Clauses;
-		ID	Nodes;
-		int*	pData;
-
-		SATFormula()
-			: pData(nullptr), Variables(0), Clauses(0), Nodes(0)
+		enum struct AssignmentState : byte
 		{
+			Assigned = 0,				// final node
+			PureVariable = 1,			// final node
+
+			AssignedFirst = 2,		// intermediate node
+			AssignedSecond = 3,		// intermediate node
+
+			Unassigned = 0xFF,		// Start node
 		};
 
-		ID getClauseSize(ID clause)
+		enum struct TruthValue : byte
 		{
-			return (clause >= Clauses) ? 0 : (ID)(pData[clause + 1] - pData[clause]);
+			False = 0,
+			True = 1,
+			Null = 2,
+			Unassigned = 0xFF,
 		};
 
-		ID getClauseStartNode(ID clause)
+		struct VariableAssignmentOverride
 		{
-			return (clause >= Clauses) ? INVALID_ID : (ID)pData[clause];
-		}
+			ID Variable;
+			ID Order;
+			AssignmentState State;
+			TruthValue RequiredLiteral, IsRequired;
 
-		int* getClause(ID clause)
+			VariableAssignmentOverride()
+				: Variable(0), Order(0), State(AssignmentState::Unassigned),
+				RequiredLiteral(TruthValue::Unassigned), IsRequired(TruthValue::Unassigned)
+			{
+			}
+
+			VariableAssignmentOverride(ID variable, AssignmentState state, ID order, TruthValue requiredLiteral, TruthValue isRequired)
+			{
+				Variable = variable;
+				State = state;
+				Order = order;
+				RequiredLiteral = requiredLiteral;
+				IsRequired = isRequired;
+			}
+		};
+
+		struct VariableAssignment
 		{
-			return (clause >= Clauses) ? nullptr : &pData[Clauses + 1 + pData[clause]];
-		}
+			ID Order;
+			TruthValue Value;
+			AssignmentState State;
+			TruthValue RequiredLiteral, IsRequired;
+
+			void Set(TruthValue _value, AssignmentState _state, ID _order)
+			{
+				Order = _order;
+				Value = _value;
+				State = _state;
+			}
+
+			void Set(VariableAssignmentOverride& override)
+			{
+				Order = override.Order;
+				Value = TruthValue::Unassigned;
+				State = override.State;
+				RequiredLiteral = override.RequiredLiteral;
+				IsRequired = override.IsRequired;
+			}
+
+			void CopyTo(VariableAssignmentOverride& override, ID variable)
+			{
+				override.Order = Order;
+				override.Variable = variable;
+				override.State = State;
+				override.RequiredLiteral = RequiredLiteral;
+				override.IsRequired = IsRequired;
+			}
+
+			VariableAssignmentOverride ToOverride(ID variable)
+			{
+				return VariableAssignmentOverride(variable, State, Order, RequiredLiteral, IsRequired);
+			}
+		};
+
+		struct Formula
+		{
+			ID	Variables;
+			Ext::ArrayOfArray<int, ID> Clauses;
+
+			Formula()
+				: Variables(0), Clauses(nullptr, 0)
+			{
+			};
+
+			Formula(ID variables, Ext::ArrayOfArray<int, ID>& clauses)
+				: Variables(variables), Clauses(clauses)
+			{
+			};
+
+			Formula(Formula& that)
+				: Variables(that.Variables), Clauses(that.Clauses)
+			{
+			};
+
+			void ctor(ID variables, Ext::ArrayOfArray<int, ID>& clauses)
+			{
+				Variables = variables;
+				Clauses = clauses;
+			};
+		};
+
+		struct  FormulaNode
+		{
+			int	Literal;
+			ID		Clause;
+		};
 	};
 }
 

@@ -47,10 +47,4 @@ public:
 #define PopCount32(x) __popcnt((x))
 #define PopCount64(x) __popcnt64((x))
 
-
-#define GetQWordAlignedSize(x) ((((x) + 7) >> 3) << 3)
-#define GetQWordAlignedSizeForBits(x) ((((x) + 63) >> 6) << 3)
-#define GetQWordSizeForBits(x) (((x) + 63) >> 6)
-#define GetSizeForBits(x) (((x) + 7) >> 3)
-
 #endif		//	BIT_H

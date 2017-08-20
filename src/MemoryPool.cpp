@@ -74,6 +74,9 @@ namespace Graph
 		: Pool(nullptr, 0, 0), BlockSize(_blockSize), 
 		  MaxPoolSize((_blockSize <= _maxPoolSize) ? _maxPoolSize : _blockSize),
 		 BlockForNextAlloc(0)
+#ifdef  TrackAllocations
+		, AllocationPtr(new void*[1000], 1000)
+#endif //  TrackAllocations
 	{
 		if (_blockSize == 0)
 			throw std::invalid_argument("_blockSize");
@@ -155,6 +158,10 @@ namespace Graph
 		// set allocated size in allocation header
 		((size_t*)ptr)[-1] = _size - AlignmentSize;
 
+#ifdef  TrackAllocations
+		AllocationPtr.append(ptr);
+#endif
+
 		return ptr;
 	}
 
@@ -162,6 +169,11 @@ namespace Graph
 	{
 		if ((_ptr == nullptr) || (Pool.size() == 0) || !IsAligned(_ptr, AlignmentSize))
 			return;
+
+#ifdef  TrackAllocations
+		assert(AllocationPtr[AllocationPtr.size() - 1] == _ptr);
+		AllocationPtr.size(AllocationPtr.size() - 1);
+#endif
 
 		auto pool = Pool.ptr<_HeapBlock>();
 		auto idx = (BlockForNextAlloc < Pool.size()) ? BlockForNextAlloc : Pool.size() - 1;
@@ -286,7 +298,7 @@ namespace Graph
 			auto poolT = Ext::List<_HeapBlock, SizeT>(new _HeapBlock[idx + 16], idx + 16, idx);
 			if (idx > 0)
 			{
-				for (size_t i = 0; i < idx; i++)
+				for (SizeT i = 0; i < idx; i++)
 					poolT[i] = pool[i];
 
 				delete[] Pool.ptr();

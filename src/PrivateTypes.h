@@ -52,6 +52,10 @@ namespace Graph
 		Ext::VList<SizeT> Pool;
 		SizeT BlockSize, MaxPoolSize;
 		SizeT BlockForNextAlloc;
+
+#ifdef TrackAllocations
+		Ext::List<void*, SizeT> AllocationPtr;
+#endif
 	};
 
 	class ReleaseMemoryToPool

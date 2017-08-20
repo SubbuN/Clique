@@ -21,31 +21,6 @@
 
 namespace Graph
 {
-	void PrintGraphMatrix(Ext::Array<Vertex> _graph, TextStream textStream)
-	{
-		if (textStream == nullptr)
-			return;
-
-		char* sz = new char[_graph.size() + 3];
-
-		for (size_t j, i = 0; (i < _graph.size()); i++)
-		{
-			auto neighbours = _graph[i].Neighbours;
-			for (j = 0; (j < _graph.size()); j++)
-				sz[j] = BitTest(neighbours, j) ? '*' : ' ';
-
-			sz[j++] = '\r';
-			sz[j++] = '\n';
-			sz[j++] = 0;
-
-			textStream(sz);
-		}
-
-		delete sz;
-
-		textStream("\r\n");
-	}
-
 
 	Ext::Array<Vertex> CreateGraph(size_t _count, void* _ptr)
 	{
@@ -101,6 +76,14 @@ namespace Graph
 
 			if (_createdThroughCreateGraph && (_graph[i].Neighbours != ptr))
 				return true;
+		}
+
+		for (size_t i = 0; i < _graph.size(); i++)
+		{
+			auto neighbours = _graph[i].Neighbours;
+			for (size_t j = 0; j < _graph.size(); j++)
+				if (BitTest(neighbours, j) && !BitTest(_graph[j].Neighbours, i))
+					return true;
 		}
 
 		return false;
@@ -411,17 +394,55 @@ namespace Graph
 
 	bool ExtractGraph(Ext::Array<Vertex> _from, Ext::Array<Vertex> _to, byte* _mask, byte* _sizeOfBitset)
 	{
-		auto size = (decltype(Vertex::Id))PopCount((UInt64*)_mask, GetQWordSizeForBits(_from.size()));
+		size_t chuncks = GetQWordSizeForBits(_from.size());
+		auto size = (decltype(Vertex::Id))PopCount((UInt64*)_mask, chuncks);
 		if (_to.size() < size)
 			return false;
 
 		decltype(Vertex::Id) i, j, k, l;
-		size_t chuncks;
 
-		if (IsLittleEndian())
+		if (size <= chuncks)
+		{
+			ID* ids = (ID*)_sizeOfBitset;
+
+			for (j = 0, i = 0; (j < size)/* && (i < _from.size())*/; i++)
+			{
+				if (!BitTest(_mask, i))
+					continue;
+
+				ids[j] = (ID)i;
+				if (_to[j].Count > 0)
+				{
+					_to[j].Count = 0;
+					ZeroMemoryPack8(_to[j].Neighbours, _to.size() + 7);
+				}
+
+				auto dest = _to[j].Neighbours;
+				auto src = _from[i].Neighbours;
+				for (k = 0; k <= j; k++)
+				{
+					if (BitTest(src, ids[k]))
+						BitSet(dest, k);
+				}
+
+				j++;
+			}
+
+			for (j = 0; j < size; j++)
+			{
+				auto dest = _to[j].Neighbours;
+				for (k = j + 1; k < size; k++)
+				{
+					if (BitTest(_to[k].Neighbours, j))
+						BitSet(dest, k);
+				}
+
+				_to[j].Count = (decltype(Vertex::Id))PopCount((UInt64*)dest, GetQWordSizeForBits(_to.size()));
+			}
+		}
+		else if (IsLittleEndian())
 		{
 			auto mask = (UInt64*)_mask;
-			chuncks = GetQWordSizeForBits(_from.size());
 
 			for (k = 0; k < chuncks; k++)
 				_sizeOfBitset[k] = (byte)PopCount64(mask[k]);
@@ -709,6 +730,20 @@ namespace Graph
 	}
 
 
+	bool IsSame(Ext::Array<Vertex> _graph, Ext::Array<Vertex> _graph2)
+	{
+		if (_graph.size() != _graph2.size())
+			return false;
+
+		for (decltype(Vertex::Id) i = 0; i < _graph.size(); i++)
+		{
+			if (memcmp(_graph[i].Neighbours, _graph2[i].Neighbours, (_graph.size() + 7) / 8) != 0)
+				return false;
+		}
+
+		return true;
+	}
+
 	bool IsSubgraph(Ext::Array<Vertex> _graph, Ext::Array<Vertex> _subGraph)
 	{
 		if (_subGraph.size() > _graph.size())
@@ -725,7 +760,6 @@ namespace Graph
 					return false;
 			}
 		}
-
 
 		return true;
 	}
@@ -894,26 +928,43 @@ namespace Graph
 	}
 
 
-	Ext::Array<Vertex> CreateGraph(SATFormula _formula)
+	Ext::Array<Vertex> CreateGraph(SAT::Formula& _formula, void* _ptr)
 	{
-		if (_formula.Clauses == 0)
+		return CreateGraph(_formula, Ext::Array<SAT::FormulaNode>(), _ptr);
+	}
+
+	Ext::Array<Vertex> CreateGraph(SAT::Formula& _formula, Ext::Array<SAT::FormulaNode> _nodes, void* _ptr)
+	{
+		Ext::ArrayOfArray<int, ID>& clauses = _formula.Clauses;
+		if (clauses.setCount() == 0)
 			return Ext::Array<Vertex>();
 
-		Ext::Array<Vertex> graph = CreateGraph(_formula.Nodes);
+		Ext::Array<Vertex> graph = (_ptr != nullptr) ? CreateGraph(clauses.elementsCount(), _ptr) : CreateGraph(clauses.elementsCount());
 
 		try
 		{
-			for (ID i = 0; i < _formula.Clauses; i++)
-			{
-				auto clauseSize = _formula.getClauseSize(i);
-				auto startNode = _formula.getClauseStartNode(i);
-				auto pLiterals = _formula.getClause(i);
+			ID nodeIdx = 0;
 
-				for (ID j = i + 1; j < _formula.Clauses; j++)
+			for (ID i = 0; i < clauses.setCount(); i++)
+			{
+				auto clauseSize = clauses.GetSetSize(i);
+				auto startNode = clauses.GetSetStartIndex(i);
+				auto pLiterals = clauses.GetSet(i);
+
+				if (_nodes.ptr() != nullptr)
 				{
-					auto clauseSize2 = _formula.getClauseSize(j);
-					auto startNode2 = _formula.getClauseStartNode(j);
-					auto pLiterals2 = _formula.getClause(j);
+					for (ID j = 0; j < clauseSize; j++, nodeIdx++)
+					{
+						_nodes[nodeIdx].Literal = pLiterals[j];
+						_nodes[nodeIdx].Clause = i;
+					}
+				}
+
+				for (ID j = i + 1; j < clauses.setCount(); j++)
+				{
+					auto clauseSize2 = clauses.GetSetSize(j);
+					auto startNode2 = clauses.GetSetStartIndex(j);
+					auto pLiterals2 = clauses.GetSet(j);
 
 					for (ID m = 0; m < clauseSize; m++)
 					{
@@ -929,14 +980,194 @@ namespace Graph
 				}
 			}
 
+			size_t size = GetQWordAlignedSizeForBits(graph.size());
+			for (ID i = 0; i < graph.size(); i++)
+				graph[i].Count = (ID)PopCount((UInt64*)graph[i].Neighbours, size >> 3);
+
 			return graph;
 		}
 		catch (...)
 		{
-			FreeGraph(graph);
+			if (_ptr == nullptr)
+				FreeGraph(graph);
 
 			return Ext::Array<Vertex>();
 		}
+	}
+
+	// Dont return a graph if empty partition is found.
+	Ext::Array<Vertex> CreateGraph(SAT::Formula& _formula, int _literal, int _literal2, ID* _array, ID* _array2, void* _ptr)
+	{
+		Ext::ArrayOfArray<int, ID>& clauses = _formula.Clauses;
+		auto list = clauses.ptrList();
+
+		if (list == nullptr)
+			return Ext::Array<Vertex>();
+
+		if ((_array == nullptr) || (_array2 == nullptr))
+			throw std::invalid_argument(__FUNCDNAME__);
+
+		ID clauseCount = 0, nodes = 0;
+
+		for (ID i = 0; i < clauses.setCount(); i++)
+		{
+			auto clauseSize = clauses.GetSetSize(i);
+			auto pSet = list + clauses.GetSetStartIndex(i);
+			ID first = 0, second = 0;
+
+			for (ID j = 0; j < clauseSize; j++)
+			{
+				auto literal = pSet[j];
+				if (literal == _literal)
+					first++;
+				else if (literal == _literal2)
+					second++;
+			}
+
+			if ((first == 0) && (second == 0))
+				continue;
+
+			if (clauseSize == (first + second))
+				return Ext::Array<Vertex>();
+
+			_array[clauseCount] = i;
+			_array2[clauseCount] = nodes;
+			nodes += clauseSize - first - second;
+			clauseCount++;
+		}
+
+		Ext::Array<Vertex> graph = (_ptr != nullptr) ? CreateGraph(nodes, _ptr) : CreateGraph(nodes);
+
+		try
+		{
+			for (ID i = 0; i < clauseCount; i++)
+			{
+				auto start = _array2[i];
+				auto clauseSize = clauses.GetSetSize(_array[i]);
+				auto pSet = list + clauses.GetSetStartIndex(_array[i]);
+
+				for (ID j = i + 1; j < clauseCount; j++)
+				{
+					auto start2 = _array2[j];
+					auto clauseSize2 = clauses.GetSetSize(_array[j]);
+					auto pSet2 = list + clauses.GetSetStartIndex(_array[j]);
+					bool edges = false;
+
+					for (ID m = 0, ii = start; m < clauseSize; m++)
+					{
+						auto literal = pSet[m];
+						if ((literal == _literal) || (literal == _literal2))
+							continue;
+
+						for (ID n = 0, jj = start2; n < clauseSize2; n++)
+						{
+							auto literal2 = pSet2[n];
+							if ((literal2 == _literal) || (literal2 == _literal2))
+								continue;
+
+							if (literal != -literal2)
+							{
+								BitSet(graph[ii].Neighbours, jj);
+								BitSet(graph[jj].Neighbours, ii);
+								edges = true;
+							}
+
+							jj++;
+						}
+
+						ii++;
+					}
+
+					if (!edges)
+					{
+						if (_ptr == nullptr)
+							FreeGraph(graph);
+
+						return Ext::Array<Vertex>();
+					}
+				}
+			}
+
+			size_t size = GetQWordAlignedSizeForBits(graph.size());
+			for (ID i = 0; i < graph.size(); i++)
+				graph[i].Count = (ID)PopCount((UInt64*)graph[i].Neighbours, size >> 3);
+
+			return graph;
+		}
+		catch (...)
+		{
+			if (_ptr == nullptr)
+				FreeGraph(graph);
+
+			return Ext::Array<Vertex>();
+		}
+	}
+
+
+	bool IsClique(Ext::Array<Vertex> _graph, decltype(Vertex::Id) *_cliqueMembers, decltype(Vertex::Id) _cliqueSize, byte* _bitset)
+	{
+		decltype(Vertex::Id) i;
+		auto bitSetLength = (decltype(Vertex::Id))GetQWordAlignedSizeForBits(_graph.size());
+
+		ZeroMemoryPack8(_bitset, bitSetLength);
+		for (i = 0; i < _cliqueSize; i++)
+		{
+			if (BitTest(_bitset, _cliqueMembers[i]))
+				return false;	// invalidArgument : duplicate found in _cliqueMembers
+
+			BitSet(_bitset, _cliqueMembers[i]);
+		}
+
+		for (i = 0; i < _cliqueSize; i++)
+		{
+			auto id = _cliqueMembers[i];
+			auto count = PopCountAandB((UInt64*)_bitset, (UInt64*)_graph[id].Neighbours, (bitSetLength >> 3));
+			if ((count != _cliqueSize) && (((count + 1) != _cliqueSize) || BitTest(_graph[id].Neighbours, id)))
+				return false;
+		}
+
+		return true;
+	}
+
+	bool IsIndependantSet(Ext::Array<Vertex> _graph, decltype(Vertex::Id) *_vertices, decltype(Vertex::Id) _verticesSize, byte* _bitset)
+	{
+		decltype(Vertex::Id) i;
+		auto bitSetLength = (decltype(Vertex::Id))GetQWordAlignedSizeForBits(_graph.size());
+
+		ZeroMemoryPack8(_bitset, bitSetLength);
+		for (i = 0; i < _verticesSize; i++)
+		{
+			if (BitTest(_bitset, _vertices[i]))
+				return false;	// invalidArgument : duplicate found in _vertices
+
+			BitSet(_bitset, _vertices[i]);
+		}
+
+		for (i = 0; i < _verticesSize; i++)
+		{
+			auto id = _vertices[i];
+			auto count = PopCountAandB((UInt64*)_bitset, (UInt64*)_graph[id].Neighbours, (bitSetLength >> 3));
+			if ((count != 0) && ((count != 1) || !BitTest(_graph[id].Neighbours, id)))
+				return false;
+		}
+
+		return true;
+	}
+
+	bool IsValidColoring(Ext::Array<Vertex> _graph, decltype(Vertex::Id) *_vertexColor)
+	{
+		for (decltype(Vertex::Id) i = 0; i < _graph.size(); i++)
+		{
+			if ((_vertexColor[i] == 0) || (_vertexColor[i] > _graph.size()))
+				return false;
+
+			auto neighbours = _graph[i].Neighbours;
+			for (decltype(Vertex::Id) j = i + 1; j < _graph.size(); j++)
+				if (BitTest(neighbours, j) && (_vertexColor[i] == _vertexColor[j]))
+					return false;
+		}
+
+		return true;
 	}
 
 }
