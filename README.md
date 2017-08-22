@@ -9,16 +9,14 @@ Output : Maximum clique size plus an instance of maximum clique
 
 ## Explanation of the algorithm
 
-[Slides(pdf)](https://github.com/SubbuN/Clique/tree/master/doc/slides/CliqueSlides.pdf)
+[pdf](https://github.com/SubbuN/Clique/tree/master/doc/slides/MaximumClique.pdf)
 
-[Slides(tex)](https://github.com/SubbuN/Clique/tree/master/doc/slides/CliqueSlides.tex)
+[tex](https://github.com/SubbuN/Clique/tree/master/doc/slides/MaximumClique.tex)
 
 
 ## Algorithm
 
 [FindClique] (https://github.com/SubbuN/Clique/src/Clique.cpp)
-
-[FindVertextColor] (https://github.com/SubbuN/Clique/src/Clique.cpp)
 
 The main algorithm is implemented in [TryFindClique](https://github.com/SubbuN/Clique/src/Clique.cpp)
 
