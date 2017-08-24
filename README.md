@@ -16,9 +16,9 @@ Output : Maximum clique size plus an instance of maximum clique
 
 ## Algorithm
 
-[FindClique] (https://github.com/SubbuN/Clique/src/Clique.cpp)
+[FindClique] (https://github.com/SubbuN/Clique/tree/master/src/Clique.cpp)
 
-The main algorithm is implemented in [TryFindClique](https://github.com/SubbuN/Clique/src/Clique.cpp)
+The main algorithm is implemented in [TryFindClique](https://github.com/SubbuN/Clique/tree/master/src/Clique.cpp)
 
 Notes:
 	For performance and simplicity, a self loop edge is created for each vertex in the graph. Therefore

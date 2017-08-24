@@ -128,7 +128,17 @@
 \section{Introduction}
 Finding maximum clique size for a given graph $G(V,E)$ is so far hard. This prevented us from moving forward and gain any knowledge about this problem and related problems. The presented algorithm breaks through this hardness and helps us move forward.
 
-The information here is organized as follows: terminology; polynomial algorithm of $O(n^3)$ for finding maximum clique, counting maximum cliques and enumerating all maximum cliques of any arbitrary \textbf{Complete Multipartite Graph}; search tree optimization(s); polynomial algorithm for finding maximum clique size of any graph when expected clique size is more than half the number of vertex $(|V| < 2k)$ under \textbf{a condition}; an algorithm that grows from quasi polynomial time for up to 1000+ vertex graph into sub-exponential for large graphs. The best case complexity is $O(n^2)$.
+Provided algorithm solves 
+\begin{itemize}
+	\setlength{\itemsep}{0pt}
+	\setlength{\parskip}{0pt}
+	\setlength{\parsep}{0pt}
+	\item any complete multipartite graph instances under $O(n^3)$.
+	\item in polynomial time when input graph has clique of size $k$ with $N$ vertices where $N < 2k$ and input graph has no vertices that is connected to all vertices in the graph.
+	\item rest of graphs are solved with quasi polynomial time for up to 1000+ vertex graph into sub-exponential for large graphs.
+	\item The best case complexity is $O(n^2)$.
+\end{itemize}
+
 
 \section{Terminology}
 Following building blocks are used throughout this paper.
