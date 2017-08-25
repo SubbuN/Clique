@@ -1699,7 +1699,7 @@ namespace Graph
 			j = vertexEdgeCount[activeVertexCount - 1];
 
 			// ToDo: Fix vertex selection criteria
-			auto pivotVertexIdx = (((i - j) <= 4) && ((activeVertexCount - i) < 8)) ? (decltype(Vertex::Id))0 : (activeVertexCount - 1);
+			auto pivotVertexIdx = (((activeVertexCount - vertexEdgeCount[0]) == 2) && (activeVertexCount > 32)) ? (decltype(Vertex::Id))0 : (activeVertexCount - 1);
 
 			auto cliqueVertexCount2 = (decltype(cliqueVertexCount))0;
 			auto subCliqueSize = cliqueSize;
@@ -2175,77 +2175,4 @@ namespace Graph
 
 		return isCliqueExist;
 	}
-
-
-
-	Ext::BooleanError PackVertices(Ext::Array<Vertex> _graph)
-	{
-		byte *activeVertexList, *activeNeighbours;
-		decltype(Vertex::Id)	*vertexId, *vertexEdgeCount;
-		decltype(Vertex::Id)	activeVertexCount, bitSetLength;
-		decltype(Vertex::Id)	id, i, j, n, setCount;
-		Ext::List<ID, ID> *pSets = nullptr;
-		int pStack[64];
-
-		bitSetLength = (decltype(Vertex::Id))GetQWordAlignedSizeForBits(_graph.size());
-
-		activeVertexList = new byte[bitSetLength * 2 + GetQWordAlignedSize(_graph.size() * sizeof(ID)) * 2 + GetQWordAlignedSize(_graph.size() * sizeof(Ext::List<ID, ID>)) + _graph.size() * GetQWordAlignedSize(_graph.size() * sizeof(ID))];
-		activeNeighbours = activeVertexList + bitSetLength;
-		vertexId = (decltype(Vertex::Id)*)(activeNeighbours + bitSetLength);
-		vertexEdgeCount = (decltype(Vertex::Id)*)((byte*)vertexId + GetQWordAlignedSize(_graph.size() * sizeof(ID)));
-		pSets = (Ext::List<ID, ID>*)((byte*)vertexEdgeCount + GetQWordAlignedSize(_graph.size() * sizeof(ID)));
-
-		{
-			byte* ptr = (byte*)pSets + GetQWordAlignedSize(_graph.size() * sizeof(Ext::List<ID, ID>));
-			for (i = 0; i < _graph.size(); i++)
-			{
-				pSets[i] = Ext::List<ID, ID>((ID*)ptr, (ID)_graph.size(), (ID)0);
-				ptr += GetQWordAlignedSize(_graph.size() * sizeof(ID));
-			}
-		}
-
-		// start with all vertices as active.
-		SetNBits((UInt64*)activeVertexList, _graph.size());
-
-		for (activeVertexCount = (decltype(i))_graph.size(), setCount = 0, n = 0; (0 < activeVertexCount); setCount++)
-		{
-			// Sort vertices in DESC order based on vertex degree
-			for (i = 0, j = 0; i < _graph.size(); i++)
-			{
-				if (!BitTest(activeVertexList, i))
-					continue;
-
-				vertexId[j] = _graph[i].Id;
-				vertexEdgeCount[j] = (ID)PopCountAandB((UInt64*)activeVertexList, (UInt64*)_graph[i].Neighbours, (bitSetLength >> 3));
-				j++;
-			}
-
-			Sort<decltype(Vertex::Id), decltype(Vertex::Id), Int32>(vertexEdgeCount, vertexId, 0, j, false, pStack);
-			auto count = PopCountAandB_Set((UInt64*)activeVertexList, (UInt64*)_graph[vertexId[0]].Neighbours, (UInt64*)activeNeighbours, (bitSetLength >> 3));
-
-			Ext::List<ID, ID>& set = pSets[setCount];
-			set.size(0);
-
-			id = vertexId[0];
-			set.append(id);
-			BitReset(activeVertexList, id);
-
-			for (id = 0; (id < _graph.size()); id++)
-			{
-				if (BitTest(activeNeighbours, id) || !BitTest(activeVertexList, id))
-					continue;
-
-				set.append(id);
-				BitReset(activeVertexList, id);
-			}
-
-			activeVertexCount -= set.size();
-			n += set.size();
-		}
-
-		delete[] activeVertexList;
-
-		return Ext::BooleanError::False;
-	}
-
 }
