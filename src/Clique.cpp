@@ -1,15 +1,15 @@
 /*
- * Copyright (c) 2017 Subramaniyan Neelagandan
- * All Rights Reserved.
- *
- * All information contained herein is, and remains the property of
- * Subramaniyan Neelagandan. The intellectual and technical concepts
- * contained herein are proprietary to Subramaniyan Neelagandan.
- *
- * Limited restrictive permission is hereby granted for educational
- * purpose(s) only and which are learning, understanding, explaining
- * and teaching.
- */
+* Copyright (c) 2017 Subramaniyan Neelagandan
+* All Rights Reserved.
+*
+* All information contained herein is, and remains the property of
+* Subramaniyan Neelagandan. The intellectual and technical concepts
+* contained herein are proprietary to Subramaniyan Neelagandan.
+*
+* Limited restrictive permission is hereby granted for educational
+* purpose(s) only and which are learning, understanding, explaining
+* and teaching.
+*/
 
 #include "GraphUtility.h"
 #include "Templates.h"
@@ -52,7 +52,7 @@ namespace Graph
 
 
 
-	#define Swap(a, b, tempStorage) tempStorage = a; a = b; b = tempStorage;
+#define Swap(a, b, tempStorage) tempStorage = a; a = b; b = tempStorage;
 
 	Ext::Array<Vertex> CreateHardPartitionClique(decltype(Vertex::Id) _graphSize, decltype(Vertex::Id) _cliqueSize)
 	{
@@ -169,14 +169,14 @@ namespace Graph
 			}
 
 			TryFindCliqueThisContext(decltype(Vertex::Id) *cliqueMembers,
-						decltype(Vertex::Id)	zeroReferenceDepth,
-						decltype(Vertex::Id) cliqueSize,
-						bool printStatistics)
-				:	CliqueMembers(cliqueMembers),
-					ZeroReferenceDepth(zeroReferenceDepth),
-					CliqueSize(cliqueSize),
-					TopGraphForMemoryReclaim(zeroReferenceDepth + 1),
-					PrintStatistics(printStatistics)
+				decltype(Vertex::Id)	zeroReferenceDepth,
+				decltype(Vertex::Id) cliqueSize,
+				bool printStatistics)
+				: CliqueMembers(cliqueMembers),
+				ZeroReferenceDepth(zeroReferenceDepth),
+				CliqueSize(cliqueSize),
+				TopGraphForMemoryReclaim(zeroReferenceDepth + 1),
+				PrintStatistics(printStatistics)
 			{
 			}
 
@@ -235,7 +235,7 @@ namespace Graph
 
 		public:
 			ResourceManager(decltype(Vertex::Id) _graphDegree, UInt32 _blockSize)
-				: MemoryPool(_blockSize), Stack(nullptr), GraphMemoryPool((UInt32) (GetGraphAllocationSize(_graphDegree) * FramesPerBlock))
+				: MemoryPool(_blockSize), Stack(nullptr), GraphMemoryPool((UInt32)(GetGraphAllocationSize(_graphDegree) * FramesPerBlock))
 			{
 				size_t allocationSize = sizeof(TryFindCliqueCallFrame) * (_graphDegree / 2 + 2);
 				CallFrame = (TryFindCliqueCallFrame*)AllocMemory(allocationSize);
@@ -364,7 +364,7 @@ namespace Graph
 			bool	TraceEvaluation;
 
 			SolveThisContext()
-				: _variableAssignment(nullptr), 
+				: _variableAssignment(nullptr),
 				_variables(nullptr),
 				OriginalVertexId(nullptr), CliqueMembers(nullptr),
 				GraphMemory(nullptr), TempGraphSize(0),
@@ -432,12 +432,14 @@ namespace Graph
 		for (size_t i = 0; (_resourceManager.CallFrame[i].callCount > 0); i++)
 		{
 			Clique::TryFindCliqueCallFrame &frame = _resourceManager.CallFrame[i];
-			sprintf_s(sz, sizeof(sz), "%8d Calls:%15I64d StartCall:%15I64d GraphSize:%8d ActiveVertices:%8d CliqueSize[In]:%8d CliqueSize:%8d ParentCliqueSize:%8d VertexEdgeCount[0]:%8d VertexEdgeCount[last]:%8d\n", 
+			sprintf_s(sz, sizeof(sz), "%8d Calls:%15I64d StartCall:%15I64d G-Size:%8d G(a)-Size:%8d K[In]:%8d K:%8d K(P):%8d d(V)[0]:%8d d(V)[last]:%8d v(pick):%8d d(v)-gap:%8d\n",
 				(int)i + 1, frame.callCount, frame.startCallCount,
 				(i < _depth) ? (decltype(Vertex::Id))frame._graph.size() : subGraphSize,
 				frame.activeVertexCount, frame._cliqueSize, frame.cliqueSize, frame._cliqueMembersCount,
 				(i <= _depth) ? frame.vertexEdgeCount[0] : -1,
-				(i <= _depth) ? frame.vertexEdgeCount[frame.activeVertexCount - 1] : -1
+				(i <= _depth) ? frame.vertexEdgeCount[frame.activeVertexCount - 1] : -1,
+				(i <= _depth) ? frame.pivotVertexIdx : -1,
+				(i <= _depth) ? (frame.activeVertexCount - frame.vertexEdgeCount[0]) : -1
 			);
 
 			textStream(sz);
@@ -464,12 +466,12 @@ namespace Graph
 
 
 	Ext::BooleanError TryFindClique(Ext::Array<Vertex> _graph, ID *_originalVertexId,
-				Ext::Unsafe::ArrayOfSet<Clique::ElementData, ID>& _cliqueMembers,
-				decltype(Vertex::Id) _cliqueMembersCount,
-				decltype(Vertex::Id)& _cliqueSize, Clique::FindOperation _op,
-				byte* _targettedVertices, decltype(Vertex::Id) _targettedVerticesCount,
-				decltype(Vertex::Id) _depth, Clique::CliqueHandler *_handler, 
-				Clique::ResourceManager& _resourceManager);
+		Ext::Unsafe::ArrayOfSet<Clique::ElementData, ID>& _cliqueMembers,
+		decltype(Vertex::Id) _cliqueMembersCount,
+		decltype(Vertex::Id)& _cliqueSize, Clique::FindOperation _op,
+		byte* _targettedVertices, decltype(Vertex::Id) _targettedVerticesCount,
+		decltype(Vertex::Id) _depth, Clique::CliqueHandler *_handler,
+		Clique::ResourceManager& _resourceManager);
 
 	decltype(Vertex::Id) GetClusters(Ext::Array<Vertex> _graph,
 		Ext::ArrayOfArray<decltype(Vertex::Id), decltype(Vertex::Id)> *_pClusters,
@@ -483,10 +485,10 @@ namespace Graph
 	//		False : resulted in conflict of the formula
 	//
 
-	bool Reduce(SAT::VariableAssignment *_variableAssignment, 
-			Ext::ArrayOfArray<int, ID> _srcClauses,
-			Ext::ArrayOfArray<int, ID>& _destClauses,
-			bool _traceEvaluation)
+	bool Reduce(SAT::VariableAssignment *_variableAssignment,
+		Ext::ArrayOfArray<int, ID> _srcClauses,
+		Ext::ArrayOfArray<int, ID>& _destClauses,
+		bool _traceEvaluation)
 	{
 		if (_srcClauses.setCount() == 0)
 		{
@@ -592,10 +594,10 @@ namespace Graph
 	}
 
 	bool AssignValue(SAT::VariableAssignment *_variableAssignment,
-			decltype(Vertex::Id)& assignmentOrder,
-			Ext::List<SAT::VariableAssignmentOverride, ID>& _assignmentOverride,
-			ID variable, SAT::AssignmentState state,
-			SAT::TruthValue truthValue, bool traceEvaluation)
+		decltype(Vertex::Id)& assignmentOrder,
+		Ext::List<SAT::VariableAssignmentOverride, ID>& _assignmentOverride,
+		ID variable, SAT::AssignmentState state,
+		SAT::TruthValue truthValue, bool traceEvaluation)
 	{
 		char msg[256];
 
@@ -622,8 +624,8 @@ namespace Graph
 			TraceMessage(msg);
 		}
 
-		if ((_variableAssignment[variable].RequiredLiteral != SAT::TruthValue::Unassigned) && 
-			 (_variableAssignment[variable].RequiredLiteral != truthValue))
+		if ((_variableAssignment[variable].RequiredLiteral != SAT::TruthValue::Unassigned) &&
+			(_variableAssignment[variable].RequiredLiteral != truthValue))
 		{
 			return true;
 		}
@@ -635,11 +637,11 @@ namespace Graph
 	}
 
 	SAT::SolveCallReturnParam Solve(SAT::Formula _formula,
-			SAT::VariableAssignment *_variableAssignment,
-			Ext::List<SAT::VariableAssignmentOverride, ID> _assignmentOverride,
-			decltype(Vertex::Id) _assignmentOrder,
-			decltype(Vertex::Id) _depth,
-			SAT::ResourceManager& _resourceManager)
+		SAT::VariableAssignment *_variableAssignment,
+		Ext::List<SAT::VariableAssignmentOverride, ID> _assignmentOverride,
+		decltype(Vertex::Id) _assignmentOrder,
+		decltype(Vertex::Id) _depth,
+		SAT::ResourceManager& _resourceManager)
 	{
 		Clique::ResourceManager& resourceManager = _resourceManager.CliqueResourceManager;
 		SAT::SolveCallFrame *frame = &_resourceManager.CallFrame[_depth];
@@ -1069,11 +1071,11 @@ namespace Graph
 		auto resourceManager = SAT::ResourceManager(_formula.Variables, graphSize, (UInt32)(2 * 32 * sizeof(int) + bitSetLength * 3 + (3 * GetQWordAlignedSize(graphSize * sizeof(ID)) + 3 * bitSetLength) * Clique::FramesPerBlock * 2));
 		auto variablesCount = _formula.Variables + 1;
 		auto variableAssignment = (SAT::VariableAssignment*)resourceManager.CliqueResourceManager.MemoryPool.Allocate(
-					GetQWordAlignedSize(sizeof(SAT::VariableAssignment) * variablesCount) + 
-					GetQWordAlignedSize(sizeof(SAT::Variable) * variablesCount) + 
-					GetQWordAlignedSize(sizeof(SAT::VariableAssignmentOverride) * variablesCount * 2) + 
-					Ext::ArrayOfArray<int, ID>::GetAllocationSize((ID)_formula.Clauses.setCount(), (ID)_formula.Clauses.elementsCount())
-				);
+			GetQWordAlignedSize(sizeof(SAT::VariableAssignment) * variablesCount) +
+			GetQWordAlignedSize(sizeof(SAT::Variable) * variablesCount) +
+			GetQWordAlignedSize(sizeof(SAT::VariableAssignmentOverride) * variablesCount * 2) +
+			Ext::ArrayOfArray<int, ID>::GetAllocationSize((ID)_formula.Clauses.setCount(), (ID)_formula.Clauses.elementsCount())
+		);
 
 		auto variables = (SAT::Variable*)((byte*)variableAssignment + GetQWordAlignedSize(sizeof(SAT::VariableAssignment) * variablesCount));
 		Ext::List<SAT::VariableAssignmentOverride, ID> assignmentOverride((SAT::VariableAssignmentOverride*)((byte*)variables + GetQWordAlignedSize(sizeof(SAT::Variable) * variablesCount)), variablesCount * 2, 0);
@@ -1140,7 +1142,7 @@ namespace Graph
 		if (IsCorrupt(_graph))
 			throw "invalid _graph.";
 
-	  /*
+		/*
 		*	_blockSize:
 		*			ResourceManager.m_Stack		:		2 * 32 * sizeof(int);
 		*			ResourceManager.m_BitSet,2	:		3 * GetQWordAlignedSizeForBits(_graph.size());
@@ -1207,10 +1209,10 @@ namespace Graph
 		return cliqueSize;
 	}
 
-	decltype(Vertex::Id) GetClusters(Ext::Array<Vertex> _graph, 
-				Ext::ArrayOfArray<decltype(Vertex::Id), decltype(Vertex::Id)> *_pClusters,
-				Ext::Array<ID> _vertexColor, decltype(Vertex::Id) _cliqueSize,
-				decltype(Vertex::Id) _depth, Clique::ResourceManager& _resourceManager)
+	decltype(Vertex::Id) GetClusters(Ext::Array<Vertex> _graph,
+		Ext::ArrayOfArray<decltype(Vertex::Id), decltype(Vertex::Id)> *_pClusters,
+		Ext::Array<ID> _vertexColor, decltype(Vertex::Id) _cliqueSize,
+		decltype(Vertex::Id) _depth, Clique::ResourceManager& _resourceManager)
 	{
 		Clique::TryFindCliqueThisContext ThisObject = _resourceManager.This;
 
@@ -1373,7 +1375,7 @@ namespace Graph
 	}
 
 	decltype(Vertex::Id) GetIndependentSets(Ext::Array<Vertex> _graph, Ext::ArrayOfArray<Graph::ID, Graph::ID> *_pSets,
-						Ext::Array<ID> _vertexColor, decltype(Vertex::Id) _cliqueSize)
+		Ext::Array<ID> _vertexColor, decltype(Vertex::Id) _cliqueSize)
 	{
 		if (IsCorrupt(_graph))
 			throw "invalid _graph.";
@@ -1404,6 +1406,23 @@ namespace Graph
 		return colors;
 	}
 
+	bool ExtractPartition(ID& activeVertexCount, ID& cliqueVertexCount, ID& cliqueSize,
+		ID* vertexId, ID *vertexEdgeCount, byte* activeVertexList,
+		Ext::Array<Vertex>& _graph, ID *_originalVertexId,
+		Ext::Unsafe::ArrayOfSet<Clique::ElementData, ID>& _cliqueMembers,
+		decltype(Vertex::Id)& _cliqueMembersCount,
+		byte* _targettedVertices, decltype(Vertex::Id)& _targettedVerticesCount,
+		Clique::ResourceManager& _resourceManager);
+
+	bool RemoveVertexAndEquivalent(ID pivotVertexIdx, bool isExist,
+		ID& activeVertexCount, ID& cliqueVertexCount, ID& cliqueSize,
+		ID* vertexId, ID *vertexEdgeCount, byte* activeVertexList,
+		byte* activeNeighbours,
+		Ext::Array<Vertex>& _graph,
+		byte* _targettedVertices, decltype(Vertex::Id)& _targettedVerticesCount,
+		Clique::ResourceManager& _resourceManager);
+
+
 #define TryFindClique_Recursion1
 
 	// Top level invokation parameters
@@ -1417,12 +1436,12 @@ namespace Graph
 	//
 
 	Ext::BooleanError TryFindClique(Ext::Array<Vertex> _graph, ID *_originalVertexId,
-				Ext::Unsafe::ArrayOfSet<Clique::ElementData, ID>& _cliqueMembers,
-				decltype(Vertex::Id) _cliqueMembersCount,
-				decltype(Vertex::Id)& _cliqueSize, Clique::FindOperation _op,
-				byte* _targettedVertices, decltype(Vertex::Id) _targettedVerticesCount,
-				decltype(Vertex::Id) _depth, Clique::CliqueHandler *_handler,
-				Clique::ResourceManager& _resourceManager)
+		Ext::Unsafe::ArrayOfSet<Clique::ElementData, ID>& _cliqueMembers,
+		decltype(Vertex::Id) _cliqueMembersCount,
+		decltype(Vertex::Id)& _cliqueSize, Clique::FindOperation _op,
+		byte* _targettedVertices, decltype(Vertex::Id) _targettedVerticesCount,
+		decltype(Vertex::Id) _depth, Clique::CliqueHandler *_handler,
+		Clique::ResourceManager& _resourceManager)
 	{
 		byte *activeVertexList, *activeNeighbours, *pActiveNeighbours;
 		decltype(Vertex::Id)	*vertexId, *vertexEdgeCount, *ids;
@@ -1438,7 +1457,7 @@ namespace Graph
 
 		bitSetLength = (decltype(Vertex::Id))GetQWordAlignedSizeForBits(_graph.size());
 
-		activeVertexList = (byte*) _resourceManager.MemoryPool.Allocate(bitSetLength * 2 + GetQWordAlignedSize(_graph.size() * sizeof(ID)) * 2);
+		activeVertexList = (byte*)_resourceManager.MemoryPool.Allocate(bitSetLength * 2 + GetQWordAlignedSize(_graph.size() * sizeof(ID)) * 2);
 		activeNeighbours = activeVertexList + bitSetLength;
 		vertexId = (decltype(Vertex::Id)*)(activeNeighbours + bitSetLength);
 		vertexEdgeCount = (decltype(Vertex::Id)*)((byte*)vertexId + GetQWordAlignedSize(_graph.size() * sizeof(ID)));
@@ -1496,137 +1515,15 @@ namespace Graph
 				continue;
 			}
 
-#pragma region Top down processing
-			// Top down processing only when all remaining vertices have at least degree of clique-size
 			auto cliqueVertexCountAtStart = cliqueVertexCount;
 
-			while ((0 < activeVertexCount) && (cliqueSize <= activeVertexCount) && (cliqueSize <= vertexEdgeCount[activeVertexCount - 1]))
+			if (ExtractPartition(activeVertexCount, cliqueVertexCount, cliqueSize,
+				vertexId, vertexEdgeCount, activeVertexList,
+				_graph, _originalVertexId, _cliqueMembers, _cliqueMembersCount,
+				_targettedVertices, _targettedVerticesCount, _resourceManager))
 			{
-				k = activeVertexCount - vertexEdgeCount[0];
-				_cliqueMembers.InitSet(_cliqueMembersCount + cliqueVertexCount);
-				_cliqueMembers.SetSetSize(_cliqueMembersCount + cliqueVertexCount, k + 1);
-
-				ids = _resourceManager.lId;
-				ID m;
-				
-				for (m = 0; (m < activeVertexCount) && (vertexEdgeCount[m] == vertexEdgeCount[0]); m++)
-				{
-					id = vertexId[m];
-					_cliqueMembers.GetValue(_cliqueMembersCount + cliqueVertexCount, 0).SetValue(id, _originalVertexId[id], (byte)Clique::PartitionVertexStatus::ConnectedToAll);
-
-					pActiveNeighbours = _graph[id].Neighbours;
-					ids[0] = id;
-
-					for (j = 1, i = 0, l = 0; (i < activeVertexCount) && (j <= k); i++)
-					{
-						if (BitTest(pActiveNeighbours, vertexId[i]))
-							continue;
-
-						ids[j] = vertexId[i];
-
-						n = (byte)Clique::PartitionVertexStatus::PartialUnverified;
-						if (vertexEdgeCount[i] == vertexEdgeCount[0])
-						{
-							l = j;
-							n = (byte)Clique::PartitionVertexStatus::ConnectedToAll;
-						}
-
-						// A vertex with ((vertexEdgeCount[i] < vertexEdgeCount[0])) is not connected to rest of the vertices, still it could be part of the clique.
-						_cliqueMembers.GetValue(_cliqueMembersCount + cliqueVertexCount, j).SetValue(vertexId[i], _originalVertexId[vertexId[i]], n);
-						j++;
-					}
-
-					n = l + 1;
-
-					for (i = 2; (i <= k); i++)
-					{
-						pActiveNeighbours = _graph[ids[i]].Neighbours;
-						for (j = 1; (j < i) && !BitTest(pActiveNeighbours, ids[j]); j++);
-						if (j < i)
-							break;
-					}
-
-					if (i > k)
-						break; // valid partition;
-				}
-
-				if ((m == activeVertexCount) || (vertexEdgeCount[m] < vertexEdgeCount[0]))
-					goto LoopExit;
-
-				_resourceManager.PartitionExtr++;
-
-				id = ids[0];
-				pActiveNeighbours = _graph[id].Neighbours;
-				for (i = 0, j = 0, l = 0; j < activeVertexCount; j++)
-				{
-					if ((id != vertexId[j]) && BitTest(pActiveNeighbours, vertexId[j]))
-					{
-						vertexEdgeCount[i] = vertexEdgeCount[j] - n;
-						vertexId[i] = vertexId[j];
-						i++;
-					}
-				}
-
-				id = k + 1;
-				l = _targettedVerticesCount;
-
-				for (j = 0; (j <= k); j++, i++)
-				{
-					vertexId[i] = ids[j];
-					vertexEdgeCount[i] = INVALID_ID;
-
-					if ((_targettedVerticesCount > 0) && BitTest(_targettedVertices, ids[j]))
-						_targettedVerticesCount--;
-					else if (id > k)
-						id = j;
-				}
-
-				activeVertexCount -= (k + 1);
-				cliqueVertexCount++;
-				if (0 < cliqueSize)
-					cliqueSize--;
-
-				if (l > _targettedVerticesCount)
-				{
-					// (id < n) : There exist a non targetted vertex in this partition which is connected to rest of the _graph.
-					// (id >= n) : all ConnectedToAll vertices in this partition are targetted vertices.
-					if ((_targettedVerticesCount == 0) && (id < n))
-					{
-						_resourceManager.Count9++;
-						goto ExitOutermostLoop;	// done processing this _graph
-					}
-					else if ((_targettedVerticesCount > 0) && (id >= n))
-						_targettedVerticesCount = 0; // targetted vertices are connected to rest of the subgraph.
-				}
-
-				for (i = 0; i <= k; i++)
-					BitReset(activeVertexList, ids[i]);
-
-				for (l = n; l <= k; l++)
-				{
-					id = ids[l];
-					pActiveNeighbours = _graph[id].Neighbours;
-					for (i = activeVertexCount; i-- > 0; )
-					{
-						if (BitTest(pActiveNeighbours, vertexId[i]))
-							vertexEdgeCount[i]--;
-					}
-
-					for (i = j = 0; (j < activeVertexCount); j++)
-					{
-						if (vertexEdgeCount[i] < vertexEdgeCount[j])
-						{
-							Swap(vertexEdgeCount[i], vertexEdgeCount[j], n);
-							Swap(vertexId[i], vertexId[j], n);
-							i++;
-						}
-						else if (vertexEdgeCount[i] > vertexEdgeCount[j])
-							i = j;
-					}
-				}
+				goto ExitOutermostLoop;
 			}
-		LoopExit:
-#pragma endregion
 
 			if (activeVertexCount < cliqueSize)
 				break;
@@ -1671,8 +1568,8 @@ namespace Graph
 					_resourceManager.TwoNHits++;
 					break;
 				}
-				else if ((cliqueSize > 32) && (vertexEdgeCount[activeVertexCount - 1] > cliqueSize) && 
-					      ((edgeTotal - vertexEdgeCount[activeVertexCount - 1]) > edgeTotal2))
+				else if ((cliqueSize > 32) && (vertexEdgeCount[activeVertexCount - 1] > cliqueSize) &&
+					((edgeTotal - vertexEdgeCount[activeVertexCount - 1]) > edgeTotal2))
 				{
 					// (cliqueSize > 32) : cost of CreateGraph() is acceptable.
 					// (vertexEdgeCount[activeVertexCount - 1] > cliqueSize) : All vertices have at least cliqueSize edges.
@@ -1695,16 +1592,11 @@ namespace Graph
 			}
 #pragma endregion
 
-			i = vertexEdgeCount[0];
-			j = vertexEdgeCount[activeVertexCount - 1];
-
-			// ToDo: Fix vertex selection criteria
 			auto pivotVertexIdx = (((activeVertexCount - vertexEdgeCount[0]) == 2) && (activeVertexCount > 32)) ? (decltype(Vertex::Id))0 : (activeVertexCount - 1);
-
 			auto cliqueVertexCount2 = (decltype(cliqueVertexCount))0;
 			auto subCliqueSize = cliqueSize;
 			id = vertexId[pivotVertexIdx];
-			auto subGraphSize = (decltype(Vertex::Id)) PopCountAandB_Set((UInt64*)activeVertexList, (UInt64*)_graph[id].Neighbours, (UInt64*)activeNeighbours, (bitSetLength >> 3));
+			auto subGraphSize = (decltype(Vertex::Id))PopCountAandB_Set((UInt64*)activeVertexList, (UInt64*)_graph[id].Neighbours, (UInt64*)activeNeighbours, (bitSetLength >> 3));
 			decltype(Vertex::Id) id2;
 
 			ids = _resourceManager.lId;
@@ -1934,57 +1826,57 @@ namespace Graph
 #pragma endregion
 
 #pragma region Pop CallFrame
-				ReturnTo:
-					frame = &_resourceManager.CallFrame[--_depth];
+					ReturnTo :
+								frame = &_resourceManager.CallFrame[--_depth];
 
-					isExist = (isCliqueExist == Ext::BooleanError::True);
-					graph = _graph;
-					originalVertexId = _originalVertexId;
-					subCliqueSize = _cliqueSize;
-					targettedVertices = _targettedVertices;
+								isExist = (isCliqueExist == Ext::BooleanError::True);
+								graph = _graph;
+								originalVertexId = _originalVertexId;
+								subCliqueSize = _cliqueSize;
+								targettedVertices = _targettedVertices;
 
-					_targettedVertices = frame->_targettedVertices;
-					_targettedVerticesCount = frame->_targettedVerticesCount;
-					_cliqueMembersCount = frame->_cliqueMembersCount;
-					_cliqueSize = frame->_cliqueSize;
-					_originalVertexId = frame->_originalVertexId;
-					_graph = frame->_graph;
+								_targettedVertices = frame->_targettedVertices;
+								_targettedVerticesCount = frame->_targettedVerticesCount;
+								_cliqueMembersCount = frame->_cliqueMembersCount;
+								_cliqueSize = frame->_cliqueSize;
+								_originalVertexId = frame->_originalVertexId;
+								_graph = frame->_graph;
 
-					isCliqueExist = frame->isCliqueExist;
-					activeVertexList = frame->activeVertexList;
-					activeNeighbours = frame->activeNeighbours;
-					vertexId = frame->vertexId;
-					vertexEdgeCount = frame->vertexEdgeCount;
-					activeVertexCount = frame->activeVertexCount;
-					cliqueSize = frame->cliqueSize;
-					cliqueVertexCount = frame->cliqueVertexCount;
-					bitSetLength = frame->bitSetLength;
-					subGraphSize = frame->subGraphSize;
-					cliqueVertexCount2 = frame->cliqueVertexCount2;
-					pivotVertexIdx = frame->pivotVertexIdx;
+								isCliqueExist = frame->isCliqueExist;
+								activeVertexList = frame->activeVertexList;
+								activeNeighbours = frame->activeNeighbours;
+								vertexId = frame->vertexId;
+								vertexEdgeCount = frame->vertexEdgeCount;
+								activeVertexCount = frame->activeVertexCount;
+								cliqueSize = frame->cliqueSize;
+								cliqueVertexCount = frame->cliqueVertexCount;
+								bitSetLength = frame->bitSetLength;
+								subGraphSize = frame->subGraphSize;
+								cliqueVertexCount2 = frame->cliqueVertexCount2;
+								pivotVertexIdx = frame->pivotVertexIdx;
 #pragma endregion
 #endif
-					_resourceManager.MemoryPool.Free(targettedVertices);
-					_resourceManager.GraphMemoryPool.Free(graph.ptr());
+								_resourceManager.MemoryPool.Free(targettedVertices);
+								_resourceManager.GraphMemoryPool.Free(graph.ptr());
 
-					if (isCliqueExist == Ext::BooleanError::Error)
-						goto ReturnOnError;
+								if (isCliqueExist == Ext::BooleanError::Error)
+									goto ReturnOnError;
 
-					// If the _graph memory is taken for sub-graph storage, recreate _graph from input _graph.
-					if (_graph.ptr() == nullptr)
-					{
-						// assert(_depth > _resourceManager.This.ZeroReferenceDepth); // The input _graph at depth 0 should never be touched.
-						frame = &_resourceManager.CallFrame[0];
-						pActiveNeighbours = _resourceManager.BitSet2;
-						ZeroMemoryPack8(pActiveNeighbours, frame->bitSetLength);
-						for (i = 0; i < _graph.size(); i++)
-							BitSet(pActiveNeighbours, _originalVertexId[i]);
+								// If the _graph memory is taken for sub-graph storage, recreate _graph from input _graph.
+								if (_graph.ptr() == nullptr)
+								{
+									// assert(_depth > _resourceManager.This.ZeroReferenceDepth); // The input _graph at depth 0 should never be touched.
+									frame = &_resourceManager.CallFrame[0];
+									pActiveNeighbours = _resourceManager.BitSet2;
+									ZeroMemoryPack8(pActiveNeighbours, frame->bitSetLength);
+									for (i = 0; i < _graph.size(); i++)
+										BitSet(pActiveNeighbours, _originalVertexId[i]);
 
-						_graph = CreateGraph((decltype(id))_graph.size(), _resourceManager.GraphMemoryPool.Allocate(GetGraphAllocationSize(_graph.size())));
-						ExtractGraph(frame->_graph, _graph, pActiveNeighbours, _resourceManager.BitSet);
+									_graph = CreateGraph((decltype(id))_graph.size(), _resourceManager.GraphMemoryPool.Allocate(GetGraphAllocationSize(_graph.size())));
+									ExtractGraph(frame->_graph, _graph, pActiveNeighbours, _resourceManager.BitSet);
 
-						_resourceManager.This.TopGraphForMemoryReclaim = _depth;
-					}
+									_resourceManager.This.TopGraphForMemoryReclaim = _depth;
+								}
 				}
 				else
 				{
@@ -1994,7 +1886,7 @@ namespace Graph
 			}
 
 			// if (cliqueSize < ((cliqueVertexCount2 - cliqueVertexCount) + subCliqueSize))
-				cliqueSize = (cliqueVertexCount2 - cliqueVertexCount) + subCliqueSize;
+			cliqueSize = (cliqueVertexCount2 - cliqueVertexCount) + subCliqueSize;
 
 			if (isExist)
 			{
@@ -2023,118 +1915,14 @@ namespace Graph
 					goto Return; // isCliqueExist can't be set to false after this since it is true now. Note: Refer before 'Return:' label. 
 			}
 
-
-#pragma region Remove processed vertex and similar subgraphs
-			Ext::Unsafe::CircularQueue<decltype(Vertex::Id)> queue(_resourceManager.lId2, _graph.size());
-			byte *queuedVertices = _resourceManager.BitSet;
-
-			ZeroMemoryPack8(queuedVertices, bitSetLength);
-
-			if ((_targettedVerticesCount > 0) && BitTest(_targettedVertices, vertexId[pivotVertexIdx]) && (--_targettedVerticesCount == 0))
+			if (RemoveVertexAndEquivalent(pivotVertexIdx, isExist,
+				activeVertexCount, cliqueVertexCount, cliqueSize,
+				vertexId, vertexEdgeCount, activeVertexList,
+				activeNeighbours, _graph,
+				_targettedVertices, _targettedVerticesCount, _resourceManager))
 			{
-				_resourceManager.Count9++;
-				goto ExitOutermostLoop;	// done processing this _graph
+				goto ExitOutermostLoop;
 			}
-
-			if (pivotVertexIdx < (activeVertexCount - 1))
-			{
-				j = vertexId[pivotVertexIdx];
-				k = vertexEdgeCount[pivotVertexIdx];
-				for (i = pivotVertexIdx; ++i < activeVertexCount; )
-				{
-					vertexId[i - 1] = vertexId[i];
-					vertexEdgeCount[i - 1] = vertexEdgeCount[i];
-				}
-				vertexId[activeVertexCount - 1] = j;
-				vertexEdgeCount[activeVertexCount - 1] = k;
-			}
-
-			while ((0 < activeVertexCount) && (cliqueSize <= --activeVertexCount))
-			{
-				id = vertexId[activeVertexCount];
-
-				subGraphSize = vertexEdgeCount[activeVertexCount];
-				vertexEdgeCount[activeVertexCount] = (cliqueVertexCount + cliqueSize) - (isExist ? 0 : 1);
-				AandB((UInt64*)activeVertexList, (UInt64*)_graph[id].Neighbours, (UInt64*)activeNeighbours, (bitSetLength >> 3));
-				// assert(subGraphSize, PopCount((UInt64*)activeNeighbours, (bitSetLength >> 3)));
-				BitReset(activeVertexList, id);
-
-				if (subGraphSize > 1)
-				{
-					if ((subGraphSize - 1) == activeVertexCount)
-					{
-						activeVertexCount = 0;	// Current vertex is connected with remaining all active vertices.
-						break;
-					}
-
-					for (i = activeVertexCount; (i-- > 0) && (vertexEdgeCount[i] <= (subGraphSize + 1)); )
-					{
-						id2 = vertexId[i];
-						bool isConnected = BitTest(activeNeighbours, id2);
-						if (BitTest(queuedVertices, id2))
-							continue;
-
-						n = (decltype(Vertex::Id))PopCountAandB((UInt64*)activeNeighbours, (UInt64*)_graph[id2].Neighbours, (bitSetLength >> 3));
-						if (isConnected ? ((n == vertexEdgeCount[i]) || (n == vertexEdgeCount[i] - 1)) : (n == vertexEdgeCount[i] - 1))
-						{
-							queue.push(id2);
-							BitSet(queuedVertices, id2);
-							_resourceManager.BtmUpHits++;
-
-							if ((_targettedVerticesCount > 0) && BitTest(_targettedVertices, id2) && (--_targettedVerticesCount == 0))
-							{
-								_resourceManager.Count9++;
-								goto ExitOutermostLoop;	// done processing this _graph
-							}
-						}
-					}
-
-					if ((activeVertexCount + 1 - queue.size()) < cliqueSize)
-					{
-						activeVertexCount -= (decltype(Vertex::Id))queue.size();
-						break;
-					}
-
-					for (i = activeVertexCount; i-- > 0; )
-					{
-						if (BitTest(activeNeighbours, vertexId[i]))
-							vertexEdgeCount[i]--;
-					}
-
-					for (i = j = 0; (j < activeVertexCount); j++)
-					{
-						if (vertexEdgeCount[i] < vertexEdgeCount[j])
-						{
-							Swap(vertexEdgeCount[i], vertexEdgeCount[j], n);
-							Swap(vertexId[i], vertexId[j], n);
-							i++;
-						}
-						else if (vertexEdgeCount[i] > vertexEdgeCount[j])
-							i = j;
-					}
-				}
-
-				if (queue.size() > 0)
-				{
-					id = queue.pop();
-					BitReset(queuedVertices, id);
-
-					for (i = activeVertexCount; (i-- > 0) && (vertexId[i] != id); );
-					n = vertexEdgeCount[i];
-
-					while (++i < activeVertexCount)
-					{
-						vertexId[i - 1] = vertexId[i];
-						vertexEdgeCount[i - 1] = vertexEdgeCount[i];
-					}
-
-					vertexId[i - 1] = id;
-					vertexEdgeCount[i - 1] = n;
-				}
-				else if (vertexEdgeCount[activeVertexCount - 1] >= cliqueSize)
-					break;
-			}
-#pragma endregion
 
 			if (_resourceManager.This.PrintStatistics && (_depth == _resourceManager.This.ZeroReferenceDepth))
 			{
@@ -2174,5 +1962,278 @@ namespace Graph
 #endif
 
 		return isCliqueExist;
+	}
+
+	bool ExtractPartition(
+		ID& activeVertexCount, ID& cliqueVertexCount, ID& cliqueSize,
+		ID* vertexId, ID *vertexEdgeCount, byte* activeVertexList,
+		Ext::Array<Vertex>& _graph, ID *_originalVertexId,
+		Ext::Unsafe::ArrayOfSet<Clique::ElementData, ID>& _cliqueMembers,
+		decltype(Vertex::Id)& _cliqueMembersCount,
+		byte* _targettedVertices, decltype(Vertex::Id)& _targettedVerticesCount,
+		Clique::ResourceManager& _resourceManager
+	)
+	{
+		byte* pActiveNeighbours;
+		ID i, j, k, l, n, id;
+
+		while ((0 < activeVertexCount) && (cliqueSize <= activeVertexCount) && (cliqueSize <= vertexEdgeCount[activeVertexCount - 1]))
+		{
+			k = activeVertexCount - vertexEdgeCount[0];
+			_cliqueMembers.InitSet(_cliqueMembersCount + cliqueVertexCount);
+			_cliqueMembers.SetSetSize(_cliqueMembersCount + cliqueVertexCount, k + 1);
+
+			auto ids = _resourceManager.lId;
+			ID m;
+
+			for (m = 0; (m < activeVertexCount) && (vertexEdgeCount[m] == vertexEdgeCount[0]); m++)
+			{
+				id = vertexId[m];
+				_cliqueMembers.GetValue(_cliqueMembersCount + cliqueVertexCount, 0).SetValue(id, _originalVertexId[id], (byte)Clique::PartitionVertexStatus::ConnectedToAll);
+
+				pActiveNeighbours = _graph[id].Neighbours;
+				ids[0] = id;
+
+				for (j = 1, i = 0, l = 0; (i < activeVertexCount) && (j <= k); i++)
+				{
+					if (BitTest(pActiveNeighbours, vertexId[i]))
+						continue;
+
+					ids[j] = vertexId[i];
+
+					n = (byte)Clique::PartitionVertexStatus::PartialUnverified;
+					if (vertexEdgeCount[i] == vertexEdgeCount[0])
+					{
+						l = j;
+						n = (byte)Clique::PartitionVertexStatus::ConnectedToAll;
+					}
+
+					// A vertex with ((vertexEdgeCount[i] < vertexEdgeCount[0])) is not connected to rest of the vertices, still it could be part of the clique.
+					_cliqueMembers.GetValue(_cliqueMembersCount + cliqueVertexCount, j).SetValue(vertexId[i], _originalVertexId[vertexId[i]], n);
+					j++;
+				}
+
+				n = l + 1;
+
+				for (i = 2; (i <= k); i++)
+				{
+					pActiveNeighbours = _graph[ids[i]].Neighbours;
+					for (j = 1; (j < i) && !BitTest(pActiveNeighbours, ids[j]); j++);
+					if (j < i)
+						break;
+				}
+
+				if (i > k)
+					break; // valid partition;
+			}
+
+			if ((m == activeVertexCount) || (vertexEdgeCount[m] < vertexEdgeCount[0]))
+				goto LoopExit;
+
+			_resourceManager.PartitionExtr++;
+
+			id = ids[0];
+			pActiveNeighbours = _graph[id].Neighbours;
+			for (i = 0, j = 0, l = 0; j < activeVertexCount; j++)
+			{
+				if ((id != vertexId[j]) && BitTest(pActiveNeighbours, vertexId[j]))
+				{
+					vertexEdgeCount[i] = vertexEdgeCount[j] - n;
+					vertexId[i] = vertexId[j];
+					i++;
+				}
+			}
+
+			id = k + 1;
+			l = _targettedVerticesCount;
+
+			for (j = 0; (j <= k); j++, i++)
+			{
+				vertexId[i] = ids[j];
+				vertexEdgeCount[i] = INVALID_ID;
+
+				if ((_targettedVerticesCount > 0) && BitTest(_targettedVertices, ids[j]))
+					_targettedVerticesCount--;
+				else if (id > k)
+					id = j;
+			}
+
+			activeVertexCount -= (k + 1);
+			cliqueVertexCount++;
+			if (0 < cliqueSize)
+				cliqueSize--;
+
+			if (l > _targettedVerticesCount)
+			{
+				// (id < n) : There exist a non targetted vertex in this partition which is connected to rest of the _graph.
+				// (id >= n) : all ConnectedToAll vertices in this partition are targetted vertices.
+				if ((_targettedVerticesCount == 0) && (id < n))
+				{
+					_resourceManager.Count9++;
+					return true; // goto ExitOutermostLoop;	// done processing this _graph
+				}
+				else if ((_targettedVerticesCount > 0) && (id >= n))
+					_targettedVerticesCount = 0; // targetted vertices are connected to rest of the subgraph.
+			}
+
+			for (i = 0; i <= k; i++)
+				BitReset(activeVertexList, ids[i]);
+
+			for (l = n; l <= k; l++)
+			{
+				id = ids[l];
+				pActiveNeighbours = _graph[id].Neighbours;
+				for (i = activeVertexCount; i-- > 0; )
+				{
+					if (BitTest(pActiveNeighbours, vertexId[i]))
+						vertexEdgeCount[i]--;
+				}
+
+				for (i = j = 0; (j < activeVertexCount); j++)
+				{
+					if (vertexEdgeCount[i] < vertexEdgeCount[j])
+					{
+						Swap(vertexEdgeCount[i], vertexEdgeCount[j], n);
+						Swap(vertexId[i], vertexId[j], n);
+						i++;
+					}
+					else if (vertexEdgeCount[i] > vertexEdgeCount[j])
+						i = j;
+				}
+			}
+		}
+	LoopExit:
+
+		return false;
+	}
+
+	bool RemoveVertexAndEquivalent(ID pivotVertexIdx, bool isExist,
+		ID& activeVertexCount, ID& cliqueVertexCount, ID& cliqueSize,
+		ID* vertexId, ID *vertexEdgeCount, byte* activeVertexList,
+		byte* activeNeighbours,
+		Ext::Array<Vertex>& _graph,
+		byte* _targettedVertices, decltype(Vertex::Id)& _targettedVerticesCount,
+		Clique::ResourceManager& _resourceManager
+	)
+	{
+		Ext::Unsafe::CircularQueue<decltype(Vertex::Id)> queue(_resourceManager.lId2, _graph.size());
+		byte *queuedVertices = _resourceManager.BitSet;
+		ID i, j, k, n, id, id2;
+		auto bitSetLength = (decltype(Vertex::Id))GetQWordAlignedSizeForBits(_graph.size());
+
+		ZeroMemoryPack8(queuedVertices, bitSetLength);
+
+		if ((_targettedVerticesCount > 0) && BitTest(_targettedVertices, vertexId[pivotVertexIdx]) && (--_targettedVerticesCount == 0))
+		{
+			_resourceManager.Count9++;
+			return true;	// goto ExitOutermostLoop;	// done processing this _graph
+		}
+
+		if (pivotVertexIdx < (activeVertexCount - 1))
+		{
+			j = vertexId[pivotVertexIdx];
+			k = vertexEdgeCount[pivotVertexIdx];
+			for (i = pivotVertexIdx; ++i < activeVertexCount; )
+			{
+				vertexId[i - 1] = vertexId[i];
+				vertexEdgeCount[i - 1] = vertexEdgeCount[i];
+			}
+			vertexId[activeVertexCount - 1] = j;
+			vertexEdgeCount[activeVertexCount - 1] = k;
+		}
+
+		while ((0 < activeVertexCount) && (cliqueSize <= --activeVertexCount))
+		{
+			id = vertexId[activeVertexCount];
+
+			auto subGraphSize = vertexEdgeCount[activeVertexCount];
+			vertexEdgeCount[activeVertexCount] = (cliqueVertexCount + cliqueSize) - (isExist ? 0 : 1);
+			AandB((UInt64*)activeVertexList, (UInt64*)_graph[id].Neighbours, (UInt64*)activeNeighbours, (bitSetLength >> 3));
+			// assert(subGraphSize, PopCount((UInt64*)activeNeighbours, (bitSetLength >> 3)));
+			BitReset(activeVertexList, id);
+
+			if (subGraphSize > 1)
+			{
+				if ((subGraphSize - 1) == activeVertexCount)
+				{
+					activeVertexCount = 0;	// Current vertex is connected with remaining all active vertices.
+					break;
+				}
+
+				bool checkPartition = (subGraphSize > vertexEdgeCount[activeVertexCount - 1]);
+				for (i = activeVertexCount; (i-- > 0) && (vertexEdgeCount[i] <= (subGraphSize + 1)); )
+				{
+					id2 = vertexId[i];
+					if (BitTest(queuedVertices, id2))
+						continue;
+
+					bool isConnected = BitTest(activeNeighbours, id2);
+					n = (decltype(Vertex::Id))PopCountAandB((UInt64*)activeNeighbours, (UInt64*)_graph[id2].Neighbours, (bitSetLength >> 3));
+
+					if (isConnected ? ((n == vertexEdgeCount[i]) || (n == vertexEdgeCount[i] - 1)) : (n == vertexEdgeCount[i] - 1))
+					{
+						queue.push(id2);
+						BitSet(queuedVertices, id2);
+						_resourceManager.BtmUpHits++;
+
+						if ((_targettedVerticesCount > 0) && BitTest(_targettedVertices, id2) && (--_targettedVerticesCount == 0))
+						{
+							_resourceManager.Count9++;
+							return true;	// goto ExitOutermostLoop;	// done processing this _graph
+						}
+					}
+					else if (checkPartition)
+					{
+						_resourceManager.Count12++;
+					}
+				}
+
+				if ((activeVertexCount + 1 - queue.size()) < cliqueSize)
+				{
+					activeVertexCount -= (decltype(Vertex::Id))queue.size();
+					break;
+				}
+
+				for (i = activeVertexCount; i-- > 0; )
+				{
+					if (BitTest(activeNeighbours, vertexId[i]))
+						vertexEdgeCount[i]--;
+				}
+
+				for (i = j = 0; (j < activeVertexCount); j++)
+				{
+					if (vertexEdgeCount[i] < vertexEdgeCount[j])
+					{
+						Swap(vertexEdgeCount[i], vertexEdgeCount[j], n);
+						Swap(vertexId[i], vertexId[j], n);
+						i++;
+					}
+					else if (vertexEdgeCount[i] > vertexEdgeCount[j])
+						i = j;
+				}
+			}
+
+			if (queue.size() > 0)
+			{
+				id = queue.pop();
+				BitReset(queuedVertices, id);
+
+				for (i = activeVertexCount; (i-- > 0) && (vertexId[i] != id); );
+				n = vertexEdgeCount[i];
+
+				while (++i < activeVertexCount)
+				{
+					vertexId[i - 1] = vertexId[i];
+					vertexEdgeCount[i - 1] = vertexEdgeCount[i];
+				}
+
+				vertexId[i - 1] = id;
+				vertexEdgeCount[i - 1] = n;
+			}
+			else if (vertexEdgeCount[activeVertexCount - 1] >= cliqueSize)
+				break;
+		}
+
+		return false;
 	}
 }
